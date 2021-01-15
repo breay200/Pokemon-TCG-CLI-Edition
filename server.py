@@ -1,5 +1,16 @@
 import socket
 import time
+import pickle
+
+'''
+#example of using pickle to serialize data as byte
+#this dictionary is an arbitrary object for the purpose of learning
+d = {1: "Hey", 2: "There"}
+
+msg = pickle.dumps(d)
+
+print(msg)
+'''
 
 HEADERSIZE = 10
 
@@ -26,16 +37,22 @@ while True:
 
     print(f"Connection from {address} has been established!")
 
-    msg = "Welcome to the Server!"
-    msg = f'{len(msg):<{HEADERSIZE}}' + msg
+    d = {1: "Hey", 2: "There"}
+    msg = pickle.dumps(d)
+
+    #print(msg)
+
+    #below needs to be converted to bytes because the msg is already bytes
+    msg = bytes(f'{len(msg):<{HEADERSIZE}}', "utf-8") + msg
     #now we're sending information to the client socket
     #can send as bytes() or send a string and use the .encode method
     #utf-8 is the type of bytes we are sending
-    clientsocket.send(bytes(msg, "utf-8"))
-
+    #no longer needs bytes convertion below
+    clientsocket.send(msg)
+    '''
     while True:
         time.sleep(3)
         msg = f"time is {time.time()}"
         msg = f'{len(msg):<{HEADERSIZE}}' + msg
         clientsocket.send(bytes(msg, "utf-8"))
-
+    '''
