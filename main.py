@@ -6,7 +6,7 @@ import socket
 import select
 import errno
 import sys
-
+import time
 '''
 cards = {
     1: {"card_type" : "pokemon", "name" : "charmander", "type" : "fire", "level" : "basic", "no_moves" : 2, "health" : 70, "weakness" : "water", "resistance" : "none", "retreat_cost" : 1, "attack_1_name" : "scratch", "attack_1_damage" : 10, "attack_1_energy_req" : 1, "attack_1_energy_type_req" : "none", "attack_2_name" : "flame tail", "attack_2_damage" : 20, "attack_2_energy_req" : 2, "attack_2_energy_type_req" : "1 fire"}
@@ -14,6 +14,96 @@ cards = {
 '''
 
 #FUNCTIONS START
+
+#CLIENT SERVER
+def clientSocket(username):
+    
+    #ROCK PAPER SCISSORS INPUT AND VERIFICATION
+    def rockPaperScissors():
+        choice = str(input("To decide who flips the coin, we must play 'rock, paper, scissors'\n(enter one of the following rock, paper, or scissors): ")).lower()
+        while choice not in ('rock', 'paper', 'scissors'):
+            choice = str(input("Please enter a valid choice: "))
+        return choice
+    
+    #ENCODE DATA IN UTF-8 AND SEND
+    def encodeAndSend(variable):
+        variable = variable.encode('utf-8')
+        variable_header = f"{len(variable):<{HEADER_LENGTH}}".encode('utf-8')
+        client_socket.send(variable_header+variable)
+        return
+
+    #RECEIVE DATA FROM SERVER
+    def receiveData():
+        try: 
+            #while True:
+                time.sleep(3)
+                #delay = 10
+                #close_time = time.time()+delay
+                data_header = client_socket.recv(HEADER_LENGTH)
+                data_length = int(data_header.decode('utf-8').strip())
+                data = client_socket.recv(data_length).decode('utf-8')
+                #if time.time() > close_time:
+                #    break 
+
+        except IOError as e:
+            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                print('Reading error', str(e))
+                sys.exit()
+        
+        except Exception as e:
+            print('General error',str(e))
+            sys.exit()
+        
+        return data
+
+    #COMPARE ROCK PAPER SCISSOR RESULTS
+    def compareRockPaperScissors(your_choice, their_choice):
+        
+        while your_choice == their_choice:
+            print("\nyou and the opponent both chose the same, try again: ")
+            your_choice = rockPaperScissors()
+            encodeAndSend(your_choice)
+            their_choice = receiveData()
+        
+        if your_choice == 'rock' and their_choice == 'scissors':
+            print(f"\nrock beats scissors, {username} gets to choose.")
+        elif your_choice == 'paper' and their_choice == 'rock':
+            print(f"\npaper beats rock, {username} gets to choose.")
+        elif your_choice == 'scissors' and their_choice == 'paper':
+            print(f"\nscissors beats paper, {username} gets to choose.")
+        elif your_choice == 'scissors' and their_choice =='rock':
+            print("\nrock beats scissors, opponent gets to choose.")
+        elif your_choice == 'rock' and their_choice == 'paper':
+            print("\npaper beats rock, opponent gets to choose.")
+        elif your_choice == 'paper' and their_choice == 'scissors':
+            print("\nscissors beats paper, opponent gets to choose")
+        
+        return
+
+
+    HEADER_LENGTH = 10
+    IP = "127.0.0.1"
+    PORT = 8080
+    
+    encoded_username = username.encode('utf-8')
+    username_header = f"{len(encoded_username):<{HEADER_LENGTH}}".encode('utf-8')
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((IP, PORT))
+    client_socket.setblocking(False)
+
+    client_socket.send(username_header + encoded_username)
+
+    while True:
+        #this input ceases the flow of the game
+        your_choice = rockPaperScissors()
+        #print("Waiting 5 seconds to ensure another player is receiving live...")
+        #time.sleep(5)
+        encodeAndSend(your_choice)
+        their_choice = receiveData()
+        compareRockPaperScissors(your_choice, their_choice)
+        break
+
 
 #ADD CARDS TO DATABASE - DICTIONARY
 def addToDatabase(no_cards_adding):
@@ -205,7 +295,7 @@ def viewDeck():
 
 def selectionScreen(selection):
     if selection == 's':
-        startBattle()
+        clientSocket(username)
     elif selection == 'v':
         viewDeck()
     elif selection == 'c':

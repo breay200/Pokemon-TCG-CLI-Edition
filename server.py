@@ -32,7 +32,7 @@ clients = {}
 while True:
     read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
     
-    print("read sockets: " + read_sockets)
+    print("read sockets: ", read_sockets)
 
     for x in read_sockets:
         if x == server_socket:
@@ -46,10 +46,10 @@ while True:
                 continue
 
             sockets_list.append(client_socket)
-            print("sockets list: " + sockets_list)
+            print("sockets list: ", sockets_list)
 
             clients[client_socket] = user
-            print("client socket: " + user)
+            print("client socket: ", user)
 
             print(f"Accepted new connection from {client_address[0]}:{client_address[1]} username: {user['data'].decode('utf-8')}")
 
@@ -69,7 +69,7 @@ while True:
             for client_socket in clients:
                 #we don't want to send the message back to the sender
                 if client_socket != x:
-                    client_socket.send(user['header'] + user['data'] + data['header'] + data['data'])
+                    client_socket.send(data['header'] + data['data'])
 
     for x in exception_sockets:
         sockets_list.remove(x)
