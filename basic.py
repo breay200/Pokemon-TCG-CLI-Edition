@@ -131,21 +131,24 @@ def addToDatabase(no_cards_adding):
 
 
 #WRITE DICTIONARY TO FILE WITH JSON
-def dictToFile(dictionary, filename):
+def dictToFile(dictionary, path, filename, string):
     global json
-    scriptpath = os.path.dirname(__file__)
-    filename = os.path.join(scriptpath, filename)
-    f = open(filename, "w")
+    #scriptpath = os.path.dirname(__file__)
+    #filename = os.path.join(scriptpath, filename)
+    path = path
+    save_path = path + "/" + filename
+    f = open(save_path, "w")
     f.write(json.dumps(dictionary))
     f.close()
-    print(f"{username.title()}, the deck has been saved to file!")
+    print(string)
 
 
 #LOAD JSON FILE AND RECONSTRUCT AS DICTIONARY
-def loadFromFile(dictionary, filename):
-    with open(filename) as f: 
+def loadFromFile(dictionary, file_path):
+    with open(file_path) as f: 
         data = f.read()
     dictionary = json.loads(data)
+    return dictionary
     #print("Data type after reconstruction : ", type(loaded_cards))
 
 #VIEW DECK OPTION 
@@ -239,6 +242,26 @@ def startBattle():
 
         print(f"\nyou decided to go {decision}")
 
+def createLocalUserAccount(user_save_path):
+    print("\n------- ACCOUNT CREATION -------\n")
+    fav_pokemon = str(input("What's your favourite Pokemon? ")).lower()
+    fav_type = str(input("What's your favourite energy type? ")).lower()
+    today = date.today()
+    dateStr = today.strftime("%d-%m-%Y")
+
+    if fav_type == 'water':
+        print(f"\n{fav_type}... good choice\n")
+    
+    user_account_dictionary['fav_pokemon'] = fav_pokemon
+    user_account_dictionary['fav_type'] = fav_type
+    user_account_dictionary['date_joined'] = dateStr
+    user_account_dictionary['no_wins'] = 0
+    user_account_dictionary['no_losses'] = 0
+
+    message = "File has successfully been created!\nAccount creation completed."
+    dictToFile(user_account_dictionary, user_save_path, username, message)
+    #print(f"Completed account creation: {user_account_dictionary}")
+
 #FUNCTIONS END
 
 #VARIABLES START
@@ -249,7 +272,26 @@ coin_sides = ["heads", "tails"]
 #GAME STARTS HERE
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
-username = str(input("Please enter a username: "))
+username = str(input("Please enter your username: ")).lower()
+
+user_account_dictionary = {}
+
+user_save_path = "save_files/users"
+saved_user_accounts = os.listdir(user_save_path)
+
+if username not in saved_user_accounts:
+    choice = str(input(f"\nThere doesn't seems to be any account associated with the username: {username.title()}. \nWould you like to set one up? (enter 'y' for yes or 'n' for no) " ))
+    if choice == 'y':
+        createLocalUserAccount(user_save_path)
+    else:
+        user_account_dictionary['username'] = username
+        print(f"That's okay {username}, we respect your privacy.")
+elif username in saved_user_accounts:
+    file_path = user_save_path + "/" + username
+    user_account_dictionary = loadFromFile(user_account_dictionary, file_path)
+    print("\nYour save data has been loaded from file!")
+
+print(user_account_dictionary)        
 
 #TO DO: create load functionality for username
 

@@ -1,4 +1,7 @@
 import socket
+import time
+
+HEADERSIZE = 10
 
 #A socket is just an endpoint that receives data
 #With a socket you send and receive data
@@ -23,8 +26,16 @@ while True:
 
     print(f"Connection from {address} has been established!")
 
+    msg = "Welcome to the Server!"
+    msg = f'{len(msg):<{HEADERSIZE}}' + msg
     #now we're sending information to the client socket
     #can send as bytes() or send a string and use the .encode method
     #utf-8 is the type of bytes we are sending
-    clientsocket.send(bytes("Welcome to the server!", "utf-8"))
-    clientsocket.close()
+    clientsocket.send(bytes(msg, "utf-8"))
+
+    while True:
+        time.sleep(3)
+        msg = f"time is {time.time()}"
+        msg = f'{len(msg):<{HEADERSIZE}}' + msg
+        clientsocket.send(bytes(msg, "utf-8"))
+
