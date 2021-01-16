@@ -291,21 +291,76 @@ def viewDeck():
             pass
         
         decision = inputDecision()
-        
 
-def selectionScreen(selection):
-    if selection == 's':
-        clientSocket(username)
-    elif selection == 'v':
-        viewDeck()
-    elif selection == 'c':
-        #call settings config function
-        pass
-    elif selection == 'e':
-        print("\nExiting the program...")
-        quit()
-    else:
-        print("ERROR HAS OCCURED AT IN SELECTION SCREEN")
+def txtToFile(path, list):
+    f = open(path, "w")
+    print(*list, sep = ",", file = f)
+    f.close()
+    print("\nFinished saving data!")
+
+def manageConfiguration():
+    
+    def updateToFile():
+            IP = str(input("Please enter the IP address of the server: (e.g. 127.0.0.1 if using loopback) "))
+            PORT = str(input("Please enter the port on the server that you would like to connect to: (use lesser known ports, e.g. 8080, 1234) "))
+            print(f"\nWhen starting a new match, your computer will attempt to port {PORT} on {IP}.\nWriting this information to file...")
+            networkList = [IP, PORT]
+            path = config_path + "/server_settings"
+            txtToFile(path, networkList)
+
+    today = date.today()
+
+    if 'date_joined' not in user_account_dictionary:
+        print("\nIf you haven't set-up an account, please still configure network settings.")
+    elif user_account_dictionary['date_joined'] == today.strftime("%d-%m-%Y"):
+        print("\nIf this is your first time playing, please configure network settings.")
+    
+    config_path = "save_files/network_config"
+    existing_config = os.listdir(config_path)
+
+    decision = str(input("\nEnter 'c' to configure network, or 'r' to return home: "))
+
+    while decision != 'r':
+        if decision == 'c':
+            if existing_config:
+                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) "))
+                if ask_edit == 'y':
+                    updateToFile()
+            else:
+                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) "))
+                if ask_edit == 'y':
+                    updateToFile()
+                else:
+                    print(f"\n{username.title()}, you won't be able to play if you do not configure the settings.")
+        decision = str(input("Enter 'c' to configure network, or 'r' to return home: "))
+    
+
+def selectionScreen():
+    def menuSelection():
+        selection = str(input(f"\n{username.title()}, please enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
+
+        while selection not in ('s', 'v', 'c', 'e'):
+            selection = str(input(f"\n{username.upper()}, please enter a valid option (enter 'h' for help): "))
+            if selection == 'h':
+                print(("Enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
+        
+        return selection
+    
+    selection = menuSelection()
+
+    while True:
+        if selection == 's':
+            clientSocket(username)
+        elif selection == 'v':
+            viewDeck()
+        elif selection == 'c':
+            manageConfiguration()
+        elif selection == 'e':
+            print("\nExiting the program...")
+            quit()
+        
+        selection = menuSelection()
+        
 
 def startBattle():
     coin_toss = str(input(f"\n{username}, please select heads or tails: "))
@@ -387,13 +442,4 @@ elif username in saved_user_accounts:
 
 print(user_account_dictionary)        
 
-#TO DO: create load functionality for username
-
-start_selection = str(input(f"\n{username.title()}, please enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
-
-while start_selection not in ('s', 'v', 'c', 'e'):
-    start_selection = str(input(f"\n{username.upper()}, please enter a valid option (enter 'h' for help): "))
-    if start_selection == 'h':
-        print(("Enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
-
-selectionScreen(start_selection)
+selectionScreen()
