@@ -32,15 +32,15 @@ def clientSocket(username, server_info):
     #RECEIVE DATA FROM SERVER
     def receiveData():
         try: 
-            #while True:
-                time.sleep(3)
-                #delay = 10
-                #close_time = time.time()+delay
+            while True:
+                #time.sleep(3)
                 data_header = client_socket.recv(HEADER_LENGTH)
                 data_length = int(data_header.decode('utf-8').strip())
                 data = client_socket.recv(data_length).decode('utf-8')
-                #if time.time() > close_time:
-                #    break 
+                
+                if len(data) >= len(data_length):
+                    break
+
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
