@@ -7,6 +7,7 @@ import select
 import errno
 import sys
 import time
+import pickle
 '''
 cards = {
     1: {"card_type" : "pokemon", "name" : "charmander", "type" : "fire", "level" : "basic", "no_moves" : 2, "health" : 70, "weakness" : "water", "resistance" : "none", "retreat_cost" : 1, "attack_1_name" : "scratch", "attack_1_damage" : 10, "attack_1_energy_req" : 1, "attack_1_energy_type_req" : "none", "attack_2_name" : "flame tail", "attack_2_damage" : 20, "attack_2_energy_req" : 2, "attack_2_energy_type_req" : "1 fire"}
@@ -16,7 +17,7 @@ cards = {
 #FUNCTIONS START
 
 #CLIENT SERVER
-def clientSocket(username):
+def clientSocket(username, server_info):
     
     #ROCK PAPER SCISSORS INPUT AND VERIFICATION
     def rockPaperScissors():
@@ -82,14 +83,16 @@ def clientSocket(username):
 
 
     HEADER_LENGTH = 10
-    IP = "127.0.0.1"
-    PORT = 8080
-    
+    #IP = "127.0.0.1"
+    #PORT = 8080
+    server_info = tuple(server_info)
+
     encoded_username = username.encode('utf-8')
     username_header = f"{len(encoded_username):<{HEADER_LENGTH}}".encode('utf-8')
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((IP, PORT))
+    #client_socket.connect((IP, PORT))
+    client_socket.connect(server_info)
     client_socket.setblocking(False)
 
     client_socket.send(username_header + encoded_username)
@@ -244,9 +247,9 @@ def loadFromFile(dictionary, file_path):
     return dictionary
     #print("Data type after reconstruction : ", type(loaded_cards))
 
+
 #VIEW DECK OPTION 
 def viewDeck():
-
     def inputDecision():
         decision = str(input("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: "))
         while decision not in ('v', 's', 'l', 'r', 'd'):
@@ -292,21 +295,30 @@ def viewDeck():
         
         decision = inputDecision()
 
-def txtToFile(path, list):
-    f = open(path, "w")
-    print(*list, sep = ",", file = f)
-    f.close()
+#WRITE DATA TO FILE, WORKS FOR LISTS ATM
+def txtToFile(path, data):
+    #COULD ADD IF TYPE(DATA) IS LIST THEN ... THEREFORE WE CAN HANDLE MULTIPLE DATA TYPES
+    with open(path, 'wb') as filehandle:
+        pickle.dump(data, filehandle)
     print("\nFinished saving data!")
 
+#LOADS LIST FROM FILE, RETURNS LIST
+def loadFromTxt(path):
+    with open(path, 'rb') as filehandle:
+        data = pickle.load(filehandle)
+    return data
+
+
 def manageConfiguration():
-    
     def updateToFile():
             IP = str(input("Please enter the IP address of the server: (e.g. 127.0.0.1 if using loopback) "))
-            PORT = str(input("Please enter the port on the server that you would like to connect to: (use lesser known ports, e.g. 8080, 1234) "))
+            PORT = int(input("Please enter the port on the server that you would like to connect to: (use lesser known ports, e.g. 8080, 1234) "))
             print(f"\nWhen starting a new match, your computer will attempt to port {PORT} on {IP}.\nWriting this information to file...")
             networkList = [IP, PORT]
             path = config_path + "/server_settings"
             txtToFile(path, networkList)
+
+    print("\n------- NETWORK CONFIGURATION MENU -------\n")
 
     today = date.today()
 
@@ -350,7 +362,16 @@ def selectionScreen():
 
     while True:
         if selection == 's':
-            clientSocket(username)
+            path = "save_files/network_config/server_settings"
+            server_info = []
+            while server_info == []:
+                try:
+                    server_info = loadFromTxt(path)
+                except FileNotFoundError:
+                    print("\nYou must configure server settings prior to playing.")
+                    manageConfiguration()
+
+            clientSocket(username, server_info)
         elif selection == 'v':
             viewDeck()
         elif selection == 'c':
@@ -390,6 +411,7 @@ def startBattle():
 
         print(f"\nyou decided to go {decision}")
 
+
 def createLocalUserAccount(user_save_path):
     print("\n------- ACCOUNT CREATION -------\n")
     fav_pokemon = str(input("What's your favourite Pokemon? ")).lower()
@@ -410,10 +432,28 @@ def createLocalUserAccount(user_save_path):
     dictToFile(user_account_dictionary, user_save_path, username, message)
     #print(f"Completed account creation: {user_account_dictionary}")
 
+
+def checkIfAccount():
+    global user_account_dictionary
+    user_save_path = "save_files/users"
+    saved_user_accounts = os.listdir(user_save_path)
+
+    if username not in saved_user_accounts:
+        choice = str(input(f"\nThere doesn't seems to be any account associated with the username: {username.title()}. \nWould you like to set one up? (enter 'y' for yes or 'n' for no) " ))
+        if choice == 'y':
+            createLocalUserAccount(user_save_path)
+        else:
+            user_account_dictionary['username'] = username
+            print(f"That's okay {username}, we respect your privacy.")
+    elif username in saved_user_accounts:
+        file_path = user_save_path + "/" + username
+        user_account_dictionary = loadFromFile(user_account_dictionary, file_path)
+        print("\nYour save data has been loaded from file!")
 #FUNCTIONS END
 
 #VARIABLES START
 card_database = {}
+user_account_dictionary = {}
 coin_sides = ["heads", "tails"]
 ##VARIABLES END
 
@@ -422,24 +462,14 @@ print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
 username = str(input("Please enter your username: ")).lower()
 
-user_account_dictionary = {}
+checkIfAccount()
+     
 
-user_save_path = "save_files/users"
-saved_user_accounts = os.listdir(user_save_path)
+print(f"\n{username.title()}, please ensure that you have network settings configured before entering a battle.\n")
 
-##THIS SHOULD BE A FUNCTION
-if username not in saved_user_accounts:
-    choice = str(input(f"\nThere doesn't seems to be any account associated with the username: {username.title()}. \nWould you like to set one up? (enter 'y' for yes or 'n' for no) " ))
-    if choice == 'y':
-        createLocalUserAccount(user_save_path)
-    else:
-        user_account_dictionary['username'] = username
-        print(f"That's okay {username}, we respect your privacy.")
-elif username in saved_user_accounts:
-    file_path = user_save_path + "/" + username
-    user_account_dictionary = loadFromFile(user_account_dictionary, file_path)
-    print("\nYour save data has been loaded from file!")
-
-print(user_account_dictionary)        
+if 'fav_pokemon' in user_account_dictionary:
+   print(f"It's what {user_account_dictionary.get('fav_pokemon')} would have wanted...")
 
 selectionScreen()
+
+

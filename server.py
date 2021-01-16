@@ -17,12 +17,15 @@ def dataReceived(client_socket):
 
 #FUNCTION ENDS
 
-header_len = 10
-ip = '127.0.0.1'
-port = 8080
-
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+ip = socket.gethostbyname(socket.gethostname()) 
+port = 8080
+header_len = 10
+
+print(f"[*] Connect to server with IP Address: {ip} and Port: {port}")
+
 server_socket.bind((ip, port))
 server_socket.listen(2)
 
@@ -32,7 +35,7 @@ clients = {}
 while True:
     read_sockets, _, exception_sockets = select.select(sockets_list, [], sockets_list)
     
-    print("read sockets: ", read_sockets)
+    #print("read sockets: ", read_sockets)
 
     for x in read_sockets:
         if x == server_socket:
@@ -46,10 +49,10 @@ while True:
                 continue
 
             sockets_list.append(client_socket)
-            print("sockets list: ", sockets_list)
+            #print("sockets list: ", sockets_list)
 
             clients[client_socket] = user
-            print("client socket: ", user)
+            #print("client socket: ", user)
 
             print(f"Accepted new connection from {client_address[0]}:{client_address[1]} username: {user['data'].decode('utf-8')}")
 
