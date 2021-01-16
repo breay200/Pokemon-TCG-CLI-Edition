@@ -90,7 +90,7 @@ def clientSocket(username, server_info):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #client_socket.connect((IP, PORT))
     client_socket.connect(server_info)
-    client_socket.setblocking(False)
+    #client_socket.setblocking(False)
 
     client_socket.send(username_header + encoded_username)
 
@@ -254,8 +254,8 @@ def deleteAFile(file):
 #VIEW DECK OPTION 
 def manageGameOptions():
     def inputDecision():
-        decision = str(input("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: ")).lower()
-        while decision not in ('v', 's', 'l', 'r', 'd'):
+        decision = str(input("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: ")).lower()
+        while decision not in ('a', 'v', 's', 'l', 'r', 'd'):
             decision = validInput(decision)
         return decision.lower()
 
@@ -263,7 +263,7 @@ def manageGameOptions():
     def validInput(decision):
         decision = str(input("\nPlease enter a valid input (enter 'h' for help): ")).lower()
         if decision == "h":
-            print("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
+            print("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
         return decision.lower()
 
 
@@ -316,7 +316,10 @@ def manageGameOptions():
     decision = inputDecision().lower()
 
     while decision != 'r':
-        if decision == 'v':
+        if decision == 'a':
+            no_cards_adding = int(input("How many cards would you like to add to the Pokemon database? "))
+            addToDatabase(no_cards_adding)
+        elif decision == 'v':
             pass
         elif decision == 's':
             #today = date.today()
@@ -495,6 +498,36 @@ def checkIfAccount():
         print("\nYour save data has been loaded from file!")
 
 
+def removePrizeCardFromDeck(no_prize_cards, deck_in_use):
+    prizeCards = []
+    for x in range(no_prize_cards):
+        x = deck_in_use.pop(0)
+        prizeCards.append(x)
+    return prizeCards
+
+#THIS IS EXACTLY THE SAME CODE LOL
+def drawCard(no_cards_to_draw, deck_in_use):
+    bufferList = []
+    for x in range(no_cards_to_draw):
+        x = deck_in_use.pop(0)
+        bufferList.append(x)
+    return bufferList
+
+
+def firstTurn(take_first_turn, your_hand, deck_in_use):
+    active_pokemon = []
+    if take_first_turn == 'true':
+        your_hand = your_hand.append(drawCard(7, deck_in_use))
+        while active_pokemon == []:
+            print("\nPlace a BASIC Pokemon from your hand into the Active Position.")
+            for x in your_hand:
+                #num = x + 1
+                if user_account_dictionary[x].get('type') == 'trainer':
+                    #print(f"\n{num}) type: trainer    name: {[x].get('name')}   description: {[x].get('action')}\n")
+                    pass
+
+
+
 #FUNCTIONS END
 
 #VARIABLES START
@@ -505,6 +538,118 @@ coin_sides = ["heads", "tails"]
 ##VARIABLES END
 
 #PROGRAM STARTS HERE
+path = "save_files/database.json"
+card_database = loadFromDict(path)
+
+#for key in card_database:
+#    print(card_database[key].get('name'))
+
+#corresponds with the no. of pokemon cards in the deck
+fire_deck = [0, 1, 1, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 19]
+#print(fire_deck)
+random.shuffle(fire_deck)
+#pop(0) removes the first item from a list
+#x = fire_deck.pop(0)
+
+prize_deck = removePrizeCardFromDeck(5, fire_deck)
+
+print(prize_deck)
+
+your_hand = []
+
+your_hand = drawCard(7, fire_deck)
+print(your_hand)
+
+no_basic_pokemon = 0
+playable_pokemon = []
+active_pokemon = {}
+benched_pokemon = {}
+
+while no_basic_pokemon == 0:
+    for x in your_hand:
+        x = str(x)
+        #print(f"{card_database[x].get('name')} is a {card_database[x].get('card_type')}")
+        if card_database[x].get('card_type') == 'pokemon' and card_database[x].get('level') == 'basic':
+            print(f"\n{card_database[x].get('name')} is a {card_database[x].get('level')} {card_database[x].get('type')} pokemon with {card_database[x].get('health')}HP and {card_database[x].get('no_moves')} moves")
+            no_basic_pokemon += 1
+            playable_pokemon.append(card_database[x].get('name').lower())
+
+    
+    if no_basic_pokemon != 0:
+        break
+    else:
+        print("\nAs there are no basic pokemon in your hand, we must reshuffle.")
+        your_hand = drawCard(7, fire_deck)
+
+
+print(f"There are {len(playable_pokemon)} playable basic pokemon: {playable_pokemon}")
+chosen_active = str(input("Please enter the name of the pokemon you wish to make the active/in play: ")).lower()
+while chosen_active not in playable_pokemon:
+    chosen_active = str(input(f"Enter a valid pokemon. Playable basic pokemon: {playable_pokemon}")).lower()
+
+print(f"size of hand before: {len(your_hand)}")
+for x in your_hand:
+    x = str(x)
+    if chosen_active == card_database[x].get('name'):
+        #active_pokemon.append(card_database[x])
+        active_pokemon = card_database[x]
+        x = int(x)
+        your_hand.remove(x)
+        playable_pokemon.remove(chosen_active)
+        no_basic_pokemon -= 1
+print(f"size of hand after: {len(your_hand)}")
+print(f"The active pokemon is:{active_pokemon}")
+
+active_pokemon['no_attached_energy'] = 0
+chosen_bench = ""
+
+if no_basic_pokemon >= 1:
+    print(f"\nYou have {no_basic_pokemon} basic Pokemon in your hand.")
+    decision = str(input("Would you like to place a Pokemon on the bench? ('y' for yes, or 'n' for no) ")).lower()
+    if decision == 'y':
+        print(f"There are {len(playable_pokemon)} playable basic pokemon: {playable_pokemon}")
+        chosen_bench = str(input("Please enter the name of the pokemon you want to add to the bench: ")).lower()
+        while chosen_bench not in playable_pokemon:
+            chosen_bench = str(input(f"Enter a valid pokemon. Playable basic pokemon: {playable_pokemon}")).lower()
+    
+for x in your_hand:
+    x = str(x)
+    if chosen_bench == card_database[x].get('name'):
+        #benched_pokemon.append(card_database[x])
+        benched_pokemon = card_database[x]
+        x = int(x)
+        your_hand.remove(x)
+        playable_pokemon.remove(chosen_bench)
+        no_basic_pokemon -= 1
+
+benched_pokemon['no_attached_energy'] = 0
+print(f"The benched pokemon is: {benched_pokemon}")
+
+decision = str(input("Would you like to attach an energy? ")).lower()
+if decision == 'y':
+    decision = str(input("Attach energy to the active pokemon or a pokemon on the bench? ")).lower()
+    if decision == 'active':
+        x = int(active_pokemon['no_attached_energy'])
+        x += 1
+        str(x)
+        active_pokemon['no_attached_energy'] = x
+        print(active_pokemon)
+    elif decision == 'benched':
+        x = int(benched_pokemon['no_attached_energy'])
+        x += 1
+        str(x)
+        benched_pokemon['no_attached_energy'] = x
+        print(benched_pokemon)
+
+
+
+
+#choosen_active = str(input("select a basic pokemon from your hand to be placed in the active position (enter the pokemon's name): ")).lower()
+
+
+'''
+
+
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
 username = str(input("Please enter your username: ")).lower()
@@ -516,4 +661,7 @@ print(f"\n{username.title()}, please ensure that you have network settings confi
 if 'fav_pokemon' in user_account_dictionary:
    print(f"It's what {user_account_dictionary.get('fav_pokemon')} would have wanted...")
 
+
+
 selectionScreen()
+'''
