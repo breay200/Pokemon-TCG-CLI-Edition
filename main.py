@@ -13,7 +13,6 @@ import pickle
 
 #CLIENT SERVER
 def clientSocket(username, server_info):
-    
     #ROCK PAPER SCISSORS INPUT AND VERIFICATION
     def rockPaperScissors():
         choice = str(input("To decide who flips the coin, we must play 'rock, paper, scissors'\n(enter one of the following rock, paper, or scissors): ")).lower()
@@ -21,12 +20,14 @@ def clientSocket(username, server_info):
             choice = str(input("Please enter a valid choice: "))
         return choice
     
+
     #ENCODE DATA IN UTF-8 AND SEND
     def encodeAndSend(variable):
         variable = variable.encode('utf-8')
         variable_header = f"{len(variable):<{HEADER_LENGTH}}".encode('utf-8')
         client_socket.send(variable_header+variable)
         return
+
 
     #RECEIVE DATA FROM SERVER
     def receiveData():
@@ -51,6 +52,7 @@ def clientSocket(username, server_info):
             sys.exit()
         
         return data
+
 
     #COMPARE ROCK PAPER SCISSOR RESULTS
     def compareRockPaperScissors(your_choice, their_choice):
@@ -116,11 +118,13 @@ def addToDatabase(no_cards_adding):
                     variable = str(input(string)).lower()
                 return variable
 
+
             def stringValidation(variable, string, error_string, while_comparison):
                 variable = str(input(string)).lower()
                 while variable not in (while_comparison):
                     variable = str(input(error_string)).lower()
                 return variable
+
 
             energy_type = ""
             energy_type_string = "Enter the pokemon's energy type: "
@@ -177,7 +181,8 @@ def addToDatabase(no_cards_adding):
                     card_database[i][ability_name] = str(input(f"Enter ability {num} name: ")).lower()
                     card_database[i][ability_no_energy] = int(input(f"Enter number of required energies for ability {num} (1, 2, 3...): "))
                     card_database[i][ability_energy_req_type] = str(input(f"Enter ability {num} energy requirement (1 fire, 2 water, 3 grass... if normal type none): ")).lower()
-                    
+
+
                 num = x + 1
                 ability_name = "ability_" + str(num) + "_name"
                 ability_damage = "ability_" + str(num) + "_damage"
@@ -245,6 +250,7 @@ def deleteAFile(file):
     os.remove(file)
     print(f"\n{file} has been deleted!")
 
+
 #VIEW DECK OPTION 
 def manageGameOptions():
     def inputDecision():
@@ -253,11 +259,13 @@ def manageGameOptions():
             decision = validInput(decision)
         return decision.lower()
 
+
     def validInput(decision):
         decision = str(input("\nPlease enter a valid input (enter 'h' for help): ")).lower()
         if decision == "h":
             print("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
         return decision.lower()
+
 
     def loadADeck():
         global deck_in_use
@@ -302,6 +310,7 @@ def manageGameOptions():
     def listFiles(path):
         return os.listdir(path)
     
+
     print("\n------- GAME OPTIONS MENU -------")
 
     decision = inputDecision().lower()
@@ -324,12 +333,14 @@ def manageGameOptions():
         
         decision = inputDecision().lower()
 
+
 #WRITE DATA TO FILE, WORKS FOR LISTS ATM
 def txtToFile(path, data):
     #COULD ADD IF TYPE(DATA) IS LIST THEN ... THEREFORE WE CAN HANDLE MULTIPLE DATA TYPES
     with open(path, 'wb') as filehandle:
         pickle.dump(data, filehandle)
     print("\nFinished saving data!")
+
 
 #LOADS LIST FROM FILE, RETURNS LIST
 def loadFromTxt(path):
@@ -346,6 +357,7 @@ def manageConfiguration():
             networkList = [IP, PORT]
             path = config_path + "/server_settings"
             txtToFile(path, networkList)
+
 
     print("\n------- NETWORK CONFIGURATION MENU -------\n")
 
@@ -387,6 +399,7 @@ def selectionScreen():
         
         return selection
     
+
     selection = menuSelection().lower()
 
     while True:
@@ -491,19 +504,16 @@ deck_in_use = {}
 coin_sides = ["heads", "tails"]
 ##VARIABLES END
 
-#GAME STARTS HERE
+#PROGRAM STARTS HERE
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
 username = str(input("Please enter your username: ")).lower()
 
 checkIfAccount()
      
-
 print(f"\n{username.title()}, please ensure that you have network settings configured before entering a battle.\n")
 
 if 'fav_pokemon' in user_account_dictionary:
    print(f"It's what {user_account_dictionary.get('fav_pokemon')} would have wanted...")
 
 selectionScreen()
-
-
