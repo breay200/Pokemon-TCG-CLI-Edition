@@ -8,11 +8,6 @@ import errno
 import sys
 import time
 import pickle
-'''
-cards = {
-    1: {"card_type" : "pokemon", "name" : "charmander", "type" : "fire", "level" : "basic", "no_moves" : 2, "health" : 70, "weakness" : "water", "resistance" : "none", "retreat_cost" : 1, "attack_1_name" : "scratch", "attack_1_damage" : 10, "attack_1_energy_req" : 1, "attack_1_energy_type_req" : "none", "attack_2_name" : "flame tail", "attack_2_damage" : 20, "attack_2_energy_req" : 2, "attack_2_energy_type_req" : "1 fire"}
-}
-'''
 
 #FUNCTIONS START
 
@@ -98,10 +93,8 @@ def clientSocket(username, server_info):
     client_socket.send(username_header + encoded_username)
 
     while True:
-        #this input ceases the flow of the game
+        #THE ACTUAL GAMEPLAY OCCURS IN THIS WHILE LOOP
         your_choice = rockPaperScissors()
-        #print("Waiting 5 seconds to ensure another player is receiving live...")
-        #time.sleep(5)
         encodeAndSend(your_choice)
         their_choice = receiveData()
         compareRockPaperScissors(your_choice, their_choice)
@@ -240,7 +233,7 @@ def dictToFile(dictionary, path, filename, string):
 
 
 #LOAD JSON FILE AND RECONSTRUCT AS DICTIONARY
-def loadFromFile(dictionary, file_path):
+def loadFromDict(file_path):
     with open(file_path) as f: 
         data = f.read()
     dictionary = json.loads(data)
@@ -248,35 +241,70 @@ def loadFromFile(dictionary, file_path):
     #print("Data type after reconstruction : ", type(loaded_cards))
 
 
+def deleteAFile(file):
+    os.remove(file)
+    print(f"\n{file} has been deleted!")
+
 #VIEW DECK OPTION 
-def viewDeck():
+def manageGameOptions():
     def inputDecision():
-        decision = str(input("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: "))
+        decision = str(input("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: ")).lower()
         while decision not in ('v', 's', 'l', 'r', 'd'):
             decision = validInput(decision)
-        return decision
+        return decision.lower()
 
     def validInput(decision):
-        decision = str(input("\nPlease enter a valid input (enter 'h' for help): "))
+        decision = str(input("\nPlease enter a valid input (enter 'h' for help): ")).lower()
         if decision == "h":
             print("\nEnter 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
-        return decision
+        return decision.lower()
 
-    def loadSaveFunctionality():
+    def loadADeck():
+        global deck_in_use
         print("\nAvailable Save Files: \n")
-        path = "save_files"
+        path = "save_files/decks"
         files = listFiles(path)
+        
+        printDecks(files)
+        selection = input("\nType the name of the deck you would like to load: ")
+
+        while selection not in files:
+            selection = str(input("\nEnter the name of a valid deck: (enter 'v' to view options again) "))
+            if selection == 'v':
+                printDecks(files)
+        
+        filename = path + "/" + selection
+        deck_in_use = loadFromDict(filename)
+
+
+    def deleteADeck():
+        path = "save_files/decks"
+        files = listFiles(path)
+        print("Available files: \n")
+        printDecks(files)
+        selection = str(input("\nEnter the name of a valid deck: (enter 'v' to view options again) "))
+        
+        while selection not in files:
+            selection = str(input("\nEnter the name of a valid deck: (enter 'v' to view options again) "))
+            if selection == 'v':
+                printDecks(files)
+        
+        selection = path + "/" + selection
+
+        deleteAFile(selection)
+
+    
+    def printDecks(files):
         for f in files:
             print(f)
-        print(files)
-        #loadFromFile()
+
 
     def listFiles(path):
         return os.listdir(path)
     
-    print("\n------- VIEW DECK MENU -------")
+    print("\n------- GAME OPTIONS MENU -------")
 
-    decision = inputDecision()
+    decision = inputDecision().lower()
 
     while decision != 'r':
         if decision == 'v':
@@ -289,11 +317,12 @@ def viewDeck():
             #dictToFile(cards, filename)
             pass
         elif decision == 'l':
-            loadSaveFunctionality()
+            loadADeck()
+            print(deck_in_use)
         elif decision == 'd':
-            pass
+            deleteADeck()
         
-        decision = inputDecision()
+        decision = inputDecision().lower()
 
 #WRITE DATA TO FILE, WORKS FOR LISTS ATM
 def txtToFile(path, data):
@@ -330,40 +359,41 @@ def manageConfiguration():
     config_path = "save_files/network_config"
     existing_config = os.listdir(config_path)
 
-    decision = str(input("\nEnter 'c' to configure network, or 'r' to return home: "))
+    decision = str(input("\nEnter 'c' to configure network, or 'r' to return home: ")).lower()
 
     while decision != 'r':
         if decision == 'c':
             if existing_config:
-                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) "))
+                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) ")).lower()
                 if ask_edit == 'y':
                     updateToFile()
             else:
-                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) "))
+                ask_edit = str(input("\nWould you like to update the network configuration? ('y' for yes, 'n' for no) ")).lower()
                 if ask_edit == 'y':
                     updateToFile()
                 else:
                     print(f"\n{username.title()}, you won't be able to play if you do not configure the settings.")
-        decision = str(input("Enter 'c' to configure network, or 'r' to return home: "))
+        decision = str(input("Enter 'c' to configure network, or 'r' to return home: ")).lower()
     
 
 def selectionScreen():
     def menuSelection():
-        selection = str(input(f"\n{username.title()}, please enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
+        selection = str(input(f"\n{username.title()}, please enter 's' to start a new battle, 'm' to manage game options (deck, etc.), 'c' to configure settings, or 'e' to exit: ")).lower()
 
-        while selection not in ('s', 'v', 'c', 'e'):
-            selection = str(input(f"\n{username.upper()}, please enter a valid option (enter 'h' for help): "))
+        while selection not in ('s', 'm', 'c', 'e'):
+            selection = str(input(f"\n{username.upper()}, please enter a valid option (enter 'h' for help): ")).lower()
             if selection == 'h':
-                print(("Enter 's' to start a new battle, 'v' to view your deck, 'c' to config settings, or 'e' to exit: "))
+                print(("Enter 's' to start a new battle, 'm' to manage game options (deck, etc.), 'c' to configure settings, or 'e' to exit: ")).lower()
         
         return selection
     
-    selection = menuSelection()
+    selection = menuSelection().lower()
 
     while True:
         if selection == 's':
             path = "save_files/network_config/server_settings"
             server_info = []
+            
             while server_info == []:
                 try:
                     server_info = loadFromTxt(path)
@@ -372,8 +402,9 @@ def selectionScreen():
                     manageConfiguration()
 
             clientSocket(username, server_info)
-        elif selection == 'v':
-            viewDeck()
+
+        elif selection == 'm':
+            manageGameOptions()
         elif selection == 'c':
             manageConfiguration()
         elif selection == 'e':
@@ -447,13 +478,16 @@ def checkIfAccount():
             print(f"That's okay {username}, we respect your privacy.")
     elif username in saved_user_accounts:
         file_path = user_save_path + "/" + username
-        user_account_dictionary = loadFromFile(user_account_dictionary, file_path)
+        user_account_dictionary = loadFromDict(file_path)
         print("\nYour save data has been loaded from file!")
+
+
 #FUNCTIONS END
 
 #VARIABLES START
 card_database = {}
 user_account_dictionary = {}
+deck_in_use = {}
 coin_sides = ["heads", "tails"]
 ##VARIABLES END
 
