@@ -75,8 +75,6 @@ def clientSocket(username, server_info):
             print("\npaper beats rock, opponent gets to choose.")
         elif your_choice == 'paper' and their_choice == 'scissors':
             print("\nscissors beats paper, opponent gets to choose")
-        
-        return
 
 
     HEADER_LENGTH = 10
@@ -101,6 +99,7 @@ def clientSocket(username, server_info):
         their_choice = receiveData()
         compareRockPaperScissors(your_choice, their_choice)
         break
+    return
 
 
 #ADD CARDS TO DATABASE - DICTIONARY
@@ -181,6 +180,7 @@ def addToDatabase(no_cards_adding):
                     card_database[i][ability_name] = str(input(f"Enter ability {num} name: ")).lower()
                     card_database[i][ability_no_energy] = int(input(f"Enter number of required energies for ability {num} (1, 2, 3...): "))
                     card_database[i][ability_energy_req_type] = str(input(f"Enter ability {num} energy requirement (1 fire, 2 water, 3 grass... if normal type none): ")).lower()
+                    return
 
 
                 num = x + 1
@@ -222,6 +222,8 @@ def addToDatabase(no_cards_adding):
                 energy_type = str(input(f"Enter a valid energy type ({energy_types})")).lower()
 
             card_database[i]['type'] = energy_type
+        
+        return
 
 
 #WRITE DICTIONARY TO FILE WITH JSON
@@ -235,6 +237,7 @@ def dictToFile(dictionary, path, filename, string):
     f.write(json.dumps(dictionary))
     f.close()
     print(string)
+    return
 
 
 #LOAD JSON FILE AND RECONSTRUCT AS DICTIONARY
@@ -249,6 +252,7 @@ def loadFromDict(file_path):
 def deleteAFile(file):
     os.remove(file)
     print(f"\n{file} has been deleted!")
+    return
 
 
 #VIEW DECK OPTION 
@@ -284,6 +288,8 @@ def manageGameOptions():
         filename = path + "/" + selection
         deck_in_use = loadFromDict(filename)
 
+        return
+
 
     def deleteADeck():
         path = "save_files/decks"
@@ -301,10 +307,13 @@ def manageGameOptions():
 
         deleteAFile(selection)
 
+        return
+
     
     def printDecks(files):
         for f in files:
             print(f)
+        return
 
 
     def listFiles(path):
@@ -343,6 +352,7 @@ def txtToFile(path, data):
     with open(path, 'wb') as filehandle:
         pickle.dump(data, filehandle)
     print("\nFinished saving data!")
+    return
 
 
 #LOADS LIST FROM FILE, RETURNS LIST
@@ -360,6 +370,7 @@ def manageConfiguration():
             networkList = [IP, PORT]
             path = config_path + "/server_settings"
             txtToFile(path, networkList)
+            return
 
 
     print("\n------- NETWORK CONFIGURATION MENU -------\n")
@@ -389,7 +400,7 @@ def manageConfiguration():
                 else:
                     print(f"\n{username.title()}, you won't be able to play if you do not configure the settings.")
         decision = str(input("Enter 'c' to configure network, or 'r' to return home: ")).lower()
-    
+    return
 
 def selectionScreen():
     def menuSelection():
@@ -401,7 +412,6 @@ def selectionScreen():
                 print(("Enter 's' to start a new battle, 'm' to manage game options (deck, etc.), 'c' to configure settings, or 'e' to exit: ")).lower()
         
         return selection
-    
 
     selection = menuSelection().lower()
 
@@ -457,6 +467,8 @@ def startBattle():
             decision = str(input("\nPlease enter a valid input, 'first' or 'second': "))
 
         print(f"\nyou decided to go {decision}")
+    
+    return
 
 
 def createLocalUserAccount(user_save_path):
@@ -479,6 +491,8 @@ def createLocalUserAccount(user_save_path):
     dictToFile(user_account_dictionary, user_save_path, username, message)
     #print(f"Completed account creation: {user_account_dictionary}")
 
+    return
+
 
 def checkIfAccount():
     global user_account_dictionary
@@ -496,6 +510,8 @@ def checkIfAccount():
         file_path = user_save_path + "/" + username
         user_account_dictionary = loadFromDict(file_path)
         print("\nYour save data has been loaded from file!")
+    
+    return
 
 
 def removePrizeCardFromDeck(no_prize_cards, deck_in_use):
@@ -504,6 +520,7 @@ def removePrizeCardFromDeck(no_prize_cards, deck_in_use):
         x = deck_in_use.pop(0)
         prizeCards.append(x)
     return prizeCards
+
 
 #THIS IS EXACTLY THE SAME CODE LOL
 def drawCard(no_cards_to_draw, deck_in_use):
@@ -516,33 +533,45 @@ def drawCard(no_cards_to_draw, deck_in_use):
 
 ## FIRST TURN START
 #SHOULD ONLY PLAY METHOD IF TAKE FIRST TURN IS TRUE BECAUSE THERE IS NO ATTACK METHOD HERE
-def firstTurn(your_hand):
-    def addToBench(chosen_bench, your_hand, no_basic_pokemon):
+def firstTurn():
+    def addToBench(chosen_bench, no_basic_pokemon):
+        global benched_pokemon
         for x in your_hand:
             x = str(x)
             if chosen_bench == card_database[x].get('name'):
-                benched_pokemon.update(card_database[x])
-                print(f"\nThere are now {len(benched_pokemon)} pokemon on the bench")
+                benched_pokemon[x] = card_database[x]
+                benched_pokemon[x]['no_attached_energy'] = 0
                 x = int(x)
                 playable_pokemon.remove(chosen_bench)
                 no_basic_pokemon -= 1
                 your_hand.remove(x)
-                break
+                print(f"{chosen_bench.title()} was added to bench")
+                return no_basic_pokemon
+        
 
-        for x in benched_pokemon:
-            benched_pokemon[x]['no_attached_energy'] = 0
+    def addToActive(chosen_active, no_basic_pokemon):
+        global active_pokemon
+        for x in your_hand:
+            x = str(x)
+            if chosen_active == card_database[x].get('name'):
+                active_pokemon = card_database[x]
+                active_pokemon['no_attached_energy'] = 0
+                x = int(x)
+                playable_pokemon.remove(chosen_active)
+                no_basic_pokemon -= 1
+                your_hand.remove(x)
+                return no_basic_pokemon
 
-    global active_pokemon
-    global benched_pokemon
+    global your_hand
     playable_pokemon = []
-    no_basic_pokemon = 0 
+    no_basic_pokemon = int(0) 
     chosen_bench = ""
 
     while no_basic_pokemon == 0:
         for x in your_hand:
             x = str(x)
             if card_database[x].get('card_type') == 'pokemon' and card_database[x].get('level') == 'basic':
-                print(f"{card_database[x].get('name')} is a {card_database[x].get('level')} {card_database[x].get('type')} pokemon with {card_database[x].get('health')}HP and {card_database[x].get('no_moves')} moves\n")
+                print(f"{card_database[x].get('name').title()} is a {card_database[x].get('level')} {card_database[x].get('type')} pokemon with {card_database[x].get('health')}HP and {card_database[x].get('no_moves')} moves\n")
                 no_basic_pokemon += 1
                 playable_pokemon.append(card_database[x].get('name').lower())
 
@@ -559,22 +588,9 @@ def firstTurn(your_hand):
     
     chosen_active = stringValidation(chosen_active, playable_pokemon)
 
-    print(f"size of hand before: {len(your_hand)}")
-    for x in your_hand:
-        x = str(x)
-        ###THERE IS A PROBLEM! IF THERE IS DUPLICATE POKEMON THEN IT TRIES TO ADD BOTH TO ACTIVE
-        if chosen_active == card_database[x].get('name'):
-            #active_pokemon.append(card_database[x])
-            active_pokemon = card_database[x]
-            active_pokemon['no_attached_energy'] = 0
-            x = int(x)
-            playable_pokemon.remove(chosen_active)
-            no_basic_pokemon -= 1
-            your_hand.remove(x)
-            break
+    no_basic_pokemon = addToActive(chosen_active, no_basic_pokemon)
 
-
-    if no_basic_pokemon >= 1:
+    while no_basic_pokemon > 0:
         print(f"\nYou have {no_basic_pokemon} basic Pokemon in your hand.")
         options = ['y', 'n']
         decision = str(input("Would you like to place a Pokemon on the bench? ('y' for yes, or 'n' for no) ")).lower()
@@ -583,17 +599,12 @@ def firstTurn(your_hand):
             print(f"There are {len(playable_pokemon)} playable basic pokemon: {playable_pokemon}")
             chosen_bench = str(input("Please enter the name of the pokemon you want to add to the bench: ")).lower()
             chosen_bench = stringValidation(chosen_bench, playable_pokemon)
-            print(chosen_bench)
-            print(your_hand)
-            addToBench(chosen_bench, your_hand, no_basic_pokemon)
+            no_basic_pokemon = addToBench(chosen_bench, no_basic_pokemon)
         elif decision == 'n':
             print("\nYou chose not to play a benched pokemon")
-            print(f"\nYou have {len(benched_pokemon)} on your bench")
-        
-        return your_hand
+            return
+    return
     
-
-
 
 def stringValidation(decision, options):
     while decision not in options:
@@ -603,16 +614,23 @@ def stringValidation(decision, options):
     return decision
 
 
+def viewActivePokemon():
+    global active_pokemon
+    print(f"\n{active_pokemon.get('name').title()} has {active_pokemon.get('health')}HP and {active_pokemon.get('no_attached_energy')} energy cards attached.")
+    no_moves = active_pokemon.get('no_moves')
+    for x in range(no_moves):
+        num = x
+        print(f"\n{active_pokemon.get(f'ability{num}_name').title()} does {active_pokemon.get(f'ability_{num}_damage')} damage and requires {active_pokemon.get(f'ability_{num}_no_energy')} energies ")
+        if active_pokemon.get(f'ability_{num}_energy_req_type') != 'none':
+            print(f"\nAbility {num+1} has a requirement that there be {active_pokemon.get(f'ability_{num}_energy_req_type')} energies ")
+        else:
+            print(f"\nAbility {num+1} does not require any specific energy card type ")
+    return
 
-def addEnergy(your_hand):
-    '''
-    def stringValidation(decision, options):
-        while decision not in options:
-            decision = str(input("\nWhat you enter was not a valid option, please try again: (enter 'h' for help) ")).lower()
-            if decision == 'h':
-                print(f"\nThese are the valid options ({options})")
-        return decision
-    '''
+def addEnergy():
+    global your_hand
+    global active_pokemon
+    global benched_pokemon
     playable_energies = []
     no_eneries = 0
     
@@ -629,14 +647,21 @@ def addEnergy(your_hand):
 
         if decision == 'y':
             options = ['a', 'b']
-            decision = str(input("\nWould you like to add an energy to the active pokemon, or a pokemon on the bench (enter 'a' or 'b')? "))
+            decision = str(input("\nWould you like to add an energy to the active pokemon, or a pokemon on the bench? (enter 'a' or 'b') "))
             decision = stringValidation(decision, options)
 
             if decision == 'a':
-                print(f"\n{active_pokemon.get('name').title()} has {active_pokemon.get('health')}HP and {active_pokemon.get('no_attached_energy')} energy cards attached.")
                 print(f"\nYour hand contains {no_eneries} energy cards.\n")
-                for x in playable_energies:
-                    print(f"{x}) {card_database[x].get('type')}")
+                options = ['y', 'n']
+                decision = str(input("Would you like to view information about the active pokemon prior to placing an energy card? (enter 'y', or 'n') "))
+                decision = stringValidation(decision, options)
+                
+                if decision == 'y':
+                    viewActivePokemon()
+
+                #for x in playable_energies:
+                #   print(f"{x}) {card_database[x].get('type')}")
+
             else:
                 print("bench")
 
@@ -679,32 +704,9 @@ prize_deck = removePrizeCardFromDeck(5, fire_deck)
 
 your_hand = drawCard(7, fire_deck)
 
-your_hand = firstTurn(your_hand)
+firstTurn()
 
-print(benched_pokemon)
-
-addEnergy(your_hand)
-
-
-'''
-
-decision = str(input("Would you like to attach an energy? ")).lower()
-if decision == 'y':
-    decision = str(input("Attach energy to the active pokemon or a pokemon on the bench? ")).lower()
-    if decision == 'active':
-        x = int(active_pokemon['no_attached_energy'])
-        x += 1
-        str(x)
-        active_pokemon['no_attached_energy'] = x
-        print(active_pokemon)
-    elif decision == 'benched':
-        x = int(benched_pokemon['no_attached_energy'])
-        x += 1
-        str(x)
-        benched_pokemon['no_attached_energy'] = x
-        print(benched_pokemon)
-'''
-
+addEnergy()
 
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
