@@ -517,17 +517,18 @@ def drawCard(no_cards_to_draw, deck_in_use):
 ## FIRST TURN START
 #SHOULD ONLY PLAY METHOD IF TAKE FIRST TURN IS TRUE BECAUSE THERE IS NO ATTACK METHOD HERE
 def firstTurn(your_hand):
-    def addToBench(chosen_bench, your_hand):
+    def addToBench(chosen_bench, your_hand, no_basic_pokemon):
         for x in your_hand:
             x = str(x)
             if chosen_bench == card_database[x].get('name'):
                 benched_pokemon.update(card_database[x])
                 print(f"\nThere are now {len(benched_pokemon)} pokemon on the bench")
                 x = int(x)
-                your_hand.remove(x)
-                print(f"\nYour hand now has {len(your_hand)} cards")
                 playable_pokemon.remove(chosen_bench)
                 no_basic_pokemon -= 1
+                your_hand.remove(x)
+                break
+
         for x in benched_pokemon:
             benched_pokemon[x]['no_attached_energy'] = 0
 
@@ -567,11 +568,10 @@ def firstTurn(your_hand):
             active_pokemon = card_database[x]
             active_pokemon['no_attached_energy'] = 0
             x = int(x)
-            your_hand.remove(x)
-            print(f"\nYou now have {len(your_hand)} cards in your hand")
             playable_pokemon.remove(chosen_active)
             no_basic_pokemon -= 1
-            print(f"\nThe active pokemon is now: {active_pokemon.get('name')}")
+            your_hand.remove(x)
+            break
 
 
     if no_basic_pokemon >= 1:
@@ -584,7 +584,8 @@ def firstTurn(your_hand):
             chosen_bench = str(input("Please enter the name of the pokemon you want to add to the bench: ")).lower()
             chosen_bench = stringValidation(chosen_bench, playable_pokemon)
             print(chosen_bench)
-            addToBench(chosen_bench, your_hand)
+            print(your_hand)
+            addToBench(chosen_bench, your_hand, no_basic_pokemon)
         elif decision == 'n':
             print("\nYou chose not to play a benched pokemon")
             print(f"\nYou have {len(benched_pokemon)} on your bench")
@@ -679,6 +680,8 @@ prize_deck = removePrizeCardFromDeck(5, fire_deck)
 your_hand = drawCard(7, fire_deck)
 
 your_hand = firstTurn(your_hand)
+
+print(benched_pokemon)
 
 addEnergy(your_hand)
 
