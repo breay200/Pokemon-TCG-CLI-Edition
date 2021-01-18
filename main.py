@@ -64,28 +64,31 @@ def clientSocket(username, server_info):
         if your_choice == 'rock' and their_choice == 'scissors':
             print(f"\nrock beats scissors, {username} gets to choose.")
             answer = flipCoin()
+            time.sleep(3)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'paper' and their_choice == 'rock':
             print(f"\npaper beats rock, {username} gets to choose.")
             answer = flipCoin()
+            time.sleep(3)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'scissors' and their_choice == 'paper':
             print(f"\nscissors beats paper, {username} gets to choose.")
             answer = flipCoin()
+            time.sleep(3)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'scissors' and their_choice =='rock':
-            print("\nrock beats scissors, opponent gets to choose.")
+            print(f"\nrock beats scissors, {opponent_username} gets to choose.")
             answer = receiveData()
             return answer
         elif your_choice == 'rock' and their_choice == 'paper':
-            print("\npaper beats rock, opponent gets to choose.")
+            print(f"\npaper beats rock, {opponent_username} gets to choose.")
             answer = receiveData()
             return answer
         elif your_choice == 'paper' and their_choice == 'scissors':
-            print("\nscissors beats paper, opponent gets to choose")
+            print(f"\nscissors beats paper, {opponent_username} gets to choose")
             answer = receiveData()
             return answer
 
@@ -111,19 +114,30 @@ def clientSocket(username, server_info):
         global your_hand
         global deck_in_use
         
+        encodeAndSend(username)
+        opponent_username = receiveData()
+
         your_choice = rockPaperScissors()
         encodeAndSend(your_choice)
 
         their_choice = receiveData()
         answer = compareRockPaperScissors(your_choice, their_choice)
 
-        print(answer)
-        #change fire_deck to your_deck
         random.shuffle(deck_in_use)
         prize_deck = removePrizeCardFromDeck(5, deck_in_use)
         your_hand = drawCard(7, deck_in_use)
-        playPokemon()
-        addEnergy()
+
+        if answer == 'first':
+            playPokemon()
+            addEnergy()
+            encodeAndSend(active_pokemon)
+            encodeAndSend(benched_pokemon)
+        elif answer == 'second':
+            opponents_active_pokemon = receiveData()
+            opponents_benched_pokemon = receiveData()
+            print(opponents_active_pokemon)
+            print(opponents_benched_pokemon)
+
         break
     return
 
@@ -482,8 +496,8 @@ def flipCoin():
     print(f"\nflipping the coin... \n{random_coin_choice}!")
 
     if coin_toss == random_coin_choice:
-        options = ['1', '2', 'first', 'second']
-        decision = str(input("\nWould you like to go first or second? "))
+        options = ['first', 'second']
+        decision = str(input("\nWould you like to go 'first' or 'second'? "))
         decision = stringValidation(decision, options)
         return decision
     else:
@@ -818,6 +832,8 @@ deck_in_use = []
 your_hand = []
 active_pokemon = {}
 benched_pokemon = {}
+opponents_active_pokemon = {}
+opponents_benched_pokemon = {}
 ##VARIABLES END
 
 #PROGRAM STARTS HERE
