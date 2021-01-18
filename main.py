@@ -114,8 +114,10 @@ def clientSocket(username, server_info):
         global your_hand
         global deck_in_use
         
+        print(f"\nWaiting 5 seconds for the opponent to join the server... {time.sleep(5)}")
         encodeAndSend(username)
         opponent_username = receiveData()
+        print(f"{opponent_username} has connected")
 
         your_choice = rockPaperScissors()
         encodeAndSend(your_choice)
