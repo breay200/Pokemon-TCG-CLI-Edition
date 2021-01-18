@@ -31,16 +31,13 @@ def clientSocket(username, server_info):
 
     #RECEIVE DATA FROM SERVER
     def receiveData():
-        try: 
+        try:
             while True:
                 #time.sleep(3)
                 data_header = client_socket.recv(HEADER_LENGTH)
                 data_length = int(data_header.decode('utf-8').strip())
                 data = client_socket.recv(data_length).decode('utf-8')
-                
-                if len(data) >= len(data_length):
-                    break
-
+                print(data)
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -65,16 +62,31 @@ def clientSocket(username, server_info):
         
         if your_choice == 'rock' and their_choice == 'scissors':
             print(f"\nrock beats scissors, {username} gets to choose.")
+            answer = flipCoin()
+            encodeAndSend(answer)
+            return answer
         elif your_choice == 'paper' and their_choice == 'rock':
             print(f"\npaper beats rock, {username} gets to choose.")
+            answer = flipCoin()
+            encodeAndSend(answer)
+            return answer
         elif your_choice == 'scissors' and their_choice == 'paper':
             print(f"\nscissors beats paper, {username} gets to choose.")
+            answer = flipCoin()
+            encodeAndSend(answer)
+            return answer
         elif your_choice == 'scissors' and their_choice =='rock':
             print("\nrock beats scissors, opponent gets to choose.")
+            answer = receiveData()
+            return answer
         elif your_choice == 'rock' and their_choice == 'paper':
             print("\npaper beats rock, opponent gets to choose.")
+            answer = receiveData()
+            return answer
         elif your_choice == 'paper' and their_choice == 'scissors':
             print("\nscissors beats paper, opponent gets to choose")
+            answer = receiveData()
+            return answer
 
 
     HEADER_LENGTH = 10
@@ -94,10 +106,21 @@ def clientSocket(username, server_info):
 
     while True:
         #THE ACTUAL GAMEPLAY OCCURS IN THIS WHILE LOOP
+        global prize_deck
+        global your_hand
+        
         your_choice = rockPaperScissors()
         encodeAndSend(your_choice)
+
         their_choice = receiveData()
-        compareRockPaperScissors(your_choice, their_choice)
+        answer = compareRockPaperScissors(your_choice, their_choice)
+
+        print(answer)
+
+        prize_deck = removePrizeCardFromDeck(5, fire_deck)
+        your_hand = drawCard(7, fire_deck)
+        playPokemon()
+        addEnergy()
         break
     return
 
@@ -440,35 +463,23 @@ def selectionScreen():
         selection = menuSelection()
         
 
-def startBattle():
-    coin_toss = str(input(f"\n{username}, please select heads or tails: "))
-    coin_toss.lower()
-    #IT WORKS
-    while coin_toss not in ('heads', 'h', 'tails', 't'):
-        coin_toss = str(input(f"{username}, please enter either 'head' or 'tails: "))
+def flipCoin():
+    options = ['heads', 'tails']
+    coin_toss = str(input(f"\n{username}, choose 'heads' or 'tails': ")).lower()
+    coin_toss = stringValidation(coin_toss, options)
 
-    coin_toss.lower()
-
-    if (coin_toss == 't'):
-        coin_toss = "tails"
-    elif (coin_toss == 'h'):
-        coin_toss = "heads"
-    else:
-        pass
-
-    random_coin_choice = random.choice(coin_sides)
+    random_coin_choice = random.choice(options)
 
     print(f"\nflipping the coin... \n{random_coin_choice}!")
 
-    if (coin_toss == "heads") and (random_coin_choice == "heads"):
+    if coin_toss == random_coin_choice:
+        options = ['1', '2', 'first', 'second']
         decision = str(input("\nWould you like to go first or second? "))
-
-        while decision not in ('first', '1', '1st', 'second', '2', '2nd'):
-            decision = str(input("\nPlease enter a valid input, 'first' or 'second': "))
-
-        print(f"\nyou decided to go {decision}")
-    
-    return
+        decision = stringValidation(decision, options)
+        return decision
+    else:
+        print(f"\nYou chose {coin_toss} and it landed {random_coin_choice}...\nYour opponent gets to choose who goes first")
+        return ""    
 
 
 def createLocalUserAccount(user_save_path):
@@ -533,7 +544,7 @@ def drawCard(no_cards_to_draw, deck_in_use):
 
 ## FIRST TURN START
 #SHOULD ONLY PLAY METHOD IF TAKE FIRST TURN IS TRUE BECAUSE THERE IS NO ATTACK METHOD HERE
-def firstTurn():
+def playPokemon():
     def addToBench(chosen_bench, no_basic_pokemon):
         global benched_pokemon
         for x in your_hand:
@@ -629,6 +640,20 @@ def viewActivePokemon():
             print(f"\nAbility {num+1} does not require any specific energy card type ")
         return
 
+def viewBenchedPokemon():
+    global benched_pokemon
+    for key in benched_pokemon:
+        print(f"\n{benched_pokemon[key].get('name').title()} has {benched_pokemon[key].get('health')}HP and {benched_pokemon[key].get('no_attached_energy')} energy cards attached.")
+        no_moves = benched_pokemon[key].get('no_moves')
+    for x in range(no_moves):
+        num = x
+        print(f"\n{benched_pokemon[key].get(f'ability{num}_name').title()} does {benched_pokemon[key].get(f'ability_{num}_damage')} damage and requires {benched_pokemon[key].get(f'ability_{num}_no_energy')} energies ")
+        if benched_pokemon[key].get(f'ability_{num}_energy_req_type') != 'none':
+            print(f"\nAbility {num+1} has a requirement that there be {benched_pokemon[key].get(f'ability_{num}_energy_req_type')} energies ")
+        else:
+            print(f"\nAbility {num+1} does not require any specific energy card type ")
+    return
+
 def addEnergy():
     def attachChosenEnergy(chosen_energy, your_hand):
         global active_pokemon
@@ -643,6 +668,49 @@ def addEnergy():
                 x = int(x)
                 your_hand.remove(x)
                 return your_hand
+    
+    def attachToBenched(chosen_energy, chosen_pokemon, your_hand):
+        global benched_pokemon
+        for x in your_hand:
+            x = str(x)
+            if card_database[x].get('name') == chosen_pokemon:
+                benched_pokemon[x]['no_attached_energy'] += 1
+                if benched_pokemon[x]['attached_energy_types'] == "":
+                    benched_pokemon[x]['attached_energy_types'] = chosen_energy
+                else:
+                    benched_pokemon[x]['attached_energy_types'] = active_pokemon['attached_energy_types'] + ", " + chosen_energy
+                x = int(x)
+                your_hand.remove(x)
+                return your_hand
+
+    def viewEnergiesInHand(playable_energies, counter_dictionary):
+        for x in playable_energies:
+            if x == 'water':
+                counter_dictionary['water energy'] += 1
+            elif x == 'grass':
+                counter_dictionary['grass energy'] += 1
+            elif x == 'fire':
+                counter_dictionary['fire energy'] += 1
+            elif x == 'electric':
+                counter_dictionary['electric energy'] += 1
+            elif x == 'fighting':
+                counter_dictionary['fighting energy'] += 1
+            elif x == 'dark':
+                counter_dictionary['dark energy'] += 1
+            elif x == 'fairy':
+                counter_dictionary['fairy energy'] += 1
+            elif x == 'steel':
+                counter_dictionary['steel energy'] += 1
+            elif x == 'dragon':
+                counter_dictionary['dragon energy'] += 1
+            elif x == 'psychic':
+                counter_dictionary['psychic energy'] += 1
+            elif x == 'normal':
+                counter_dictionary['normal energy'] += 1
+
+        for key, value in counter_dictionary.items():
+            if value > 0:
+                print(f"\nYou have {value} {key} cards in your hand")
 
     global your_hand
     global active_pokemon
@@ -662,6 +730,7 @@ def addEnergy():
     }
 
     playable_energies = []
+    bench_pokemon_list = []
     no_eneries = 0
     
     for x in your_hand:
@@ -681,53 +750,16 @@ def addEnergy():
             decision = stringValidation(decision, options)
 
             if decision == 'a':
-                print(f"\nYour hand contains {no_eneries} energy cards.\n")
+                #print(f"\nYour hand contains {no_eneries} energy cards.\n")
+                
+                viewEnergiesInHand(playable_energies, counter_dictionary)
+                
                 options = ['y', 'n']
                 decision = str(input("Would you like to view information about the active pokemon prior to placing an energy card? (enter 'y', or 'n') "))
                 decision = stringValidation(decision, options)
                 
                 if decision == 'y':
                     viewActivePokemon()
-
-                for x in playable_energies:
-                    if x == 'water':
-                        counter_dictionary['water energy'] += 1
-                        #water_counter += 1
-                    elif x == 'grass':
-                        counter_dictionary['grass energy'] += 1
-                        #grass_counter += 1
-                    elif x == 'fire':
-                        counter_dictionary['fire energy'] += 1
-                        #fire_counter += 1
-                    elif x == 'electric':
-                        counter_dictionary['electric energy'] += 1
-                        #electric_counter += 1
-                    elif x == 'fighting':
-                        counter_dictionary['fighting energy'] += 1
-                        #fighting_counter += 1
-                    elif x == 'dark':
-                        counter_dictionary['dark energy'] += 1
-                        #dark_counter += 1
-                    elif x == 'fairy':
-                        counter_dictionary['fairy energy'] += 1
-                        #fairy_counter += 1
-                    elif x == 'steel':
-                        counter_dictionary['steel energy'] += 1
-                        #steel_counter += 1
-                    elif x == 'dragon':
-                        counter_dictionary['dragon energy'] += 1
-                        #dragon_counter += 1
-                    elif x == 'psychic':
-                        counter_dictionary['psychic energy'] += 1
-                        #psychic_counter += 1
-                    elif x == 'normal':
-                        counter_dictionary['normal energy'] += 1
-                        #normal_counter += 1
-
-                for key, value in counter_dictionary.items():
-                    if value > 0:
-                        print(f"\nYou have {value} {key} cards in your hand")
-                
 
                 chosen_energy = str(input("\nPlease enter the type of energy you would like to attach: ")).lower()
                 chosen_energy = stringValidation(chosen_energy, playable_energies)
@@ -736,7 +768,28 @@ def addEnergy():
                 print(f"\nYou successfully attached a {chosen_energy} energy to {active_pokemon.get('name').title()}!")
 
             else:
-                print("bench")
+                viewEnergiesInHand(playable_energies, counter_dictionary)
+
+                options = ['y', 'n']
+                decision = str(input("Would you like to view information about your benched pokemon prior to placing an energy card? (enter 'y', or 'n') "))
+                decision = stringValidation(decision, options)
+
+                if decision == 'y':
+                    viewBenchedPokemon()
+                
+                for key in benched_pokemon:
+                    bench_pokemon_list.append(benched_pokemon[key].get('name'))
+                
+                print(bench_pokemon_list)
+                chosen_pokemon = str(input("Please enter the name of the benched pokemon that you would like to attach an energy to: "))
+                chosen_pokemon = stringValidation(chosen_pokemon, bench_pokemon_list)
+
+                chosen_energy = str(input(f"\nPlease enter the type of energy you would like to attach to {chosen_pokemon}: ")).lower()
+                chosen_energy = stringValidation(chosen_energy, playable_energies)
+                
+                your_hand = attachToBenched(chosen_energy, chosen_pokemon, your_hand)
+
+                print(f"\nYou successfully attached a {chosen_energy} energy to {chosen_pokemon.title()}!")
 
         else:
             return
@@ -752,7 +805,6 @@ def addEnergy():
 card_database = {}
 user_account_dictionary = {}
 deck_in_use = {}
-coin_sides = ["heads", "tails"]
 your_hand = []
 active_pokemon = {}
 benched_pokemon = {}
@@ -767,19 +819,13 @@ card_database = loadFromDict(path)
 
 #corresponds with the no. of pokemon cards in the deck
 fire_deck = [0, 1, 1, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 19]
-#print(fire_deck)
+
 random.shuffle(fire_deck)
 #pop(0) removes the first item from a list
 #x = fire_deck.pop(0)
 
 #PRIZE DECK GOES BEFORE YOUR HAND DECLARATION
-prize_deck = removePrizeCardFromDeck(5, fire_deck)
 
-your_hand = drawCard(7, fire_deck)
-
-firstTurn()
-
-addEnergy()
 
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
 
