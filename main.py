@@ -127,7 +127,7 @@ def addToDatabase(no_cards_adding):
 
             energy_type = ""
             energy_type_string = "Enter the pokemon's energy type: "
-            while_comparison_energy_type = "'grass', 'fire', 'water', 'lightning', 'fighting', 'psychic', 'normal', 'colorless', 'colourless', 'darkness', 'metal', 'dragon', 'fairy', 'none'"
+            while_comparison_energy_type = "'grass', 'fire', 'water', 'electric', 'fighting', 'psychic', 'normal', 'dark', 'steel', 'dragon', 'fairy'"
             energy_type_error_string = "Enter a valid energy type (" + while_comparison_energy_type + "): "
             energy_type = stringValidation(energy_type, energy_type_string, energy_type_error_string, while_comparison_energy_type)
             card_database[i]['type'] = energy_type
@@ -541,6 +541,7 @@ def firstTurn():
             if chosen_bench == card_database[x].get('name'):
                 benched_pokemon[x] = card_database[x]
                 benched_pokemon[x]['no_attached_energy'] = 0
+                benched_pokemon[x]['attached_energy_types'] = ""
                 x = int(x)
                 playable_pokemon.remove(chosen_bench)
                 no_basic_pokemon -= 1
@@ -556,6 +557,7 @@ def firstTurn():
             if chosen_active == card_database[x].get('name'):
                 active_pokemon = card_database[x]
                 active_pokemon['no_attached_energy'] = 0
+                active_pokemon['attached_energy_types'] = ""
                 x = int(x)
                 playable_pokemon.remove(chosen_active)
                 no_basic_pokemon -= 1
@@ -625,12 +627,40 @@ def viewActivePokemon():
             print(f"\nAbility {num+1} has a requirement that there be {active_pokemon.get(f'ability_{num}_energy_req_type')} energies ")
         else:
             print(f"\nAbility {num+1} does not require any specific energy card type ")
-    return
+        return
 
 def addEnergy():
+    def attachChosenEnergy(chosen_energy, your_hand):
+        global active_pokemon
+        for x in your_hand:
+            x = str(x)
+            if card_database[x].get('card_type') == 'energy' and chosen_energy == card_database[x].get('type'):
+                active_pokemon['no_attached_energy'] += 1
+                if active_pokemon['attached_energy_types'] == "":
+                    active_pokemon['attached_energy_types'] = chosen_energy
+                else:
+                    active_pokemon['attached_energy_types'] = active_pokemon['attached_energy_types'] + ", " + chosen_energy
+                x = int(x)
+                your_hand.remove(x)
+                return your_hand
+
     global your_hand
     global active_pokemon
     global benched_pokemon
+    counter_dictionary = {
+        'water energy': 0,
+        'grass energy': 0,
+        'electric energy': 0,
+        'fire energy': 0,
+        'fighting energy': 0,
+        'steel energy': 0,
+        'dark energy': 0,
+        'dragon energy': 0,
+        'psychic energy': 0,
+        'normal energy': 0,
+        'fairy energy': 0,
+    }
+
     playable_energies = []
     no_eneries = 0
     
@@ -638,7 +668,7 @@ def addEnergy():
         x = str(x)
         if card_database[x].get('card_type') == 'energy':
             no_eneries += 1
-            playable_energies.append(x)
+            playable_energies.append(card_database[x].get('type').lower())
     
     if no_eneries > 0:
         options = ['y', 'n']
@@ -659,8 +689,51 @@ def addEnergy():
                 if decision == 'y':
                     viewActivePokemon()
 
-                #for x in playable_energies:
-                #   print(f"{x}) {card_database[x].get('type')}")
+                for x in playable_energies:
+                    if x == 'water':
+                        counter_dictionary['water energy'] += 1
+                        #water_counter += 1
+                    elif x == 'grass':
+                        counter_dictionary['grass energy'] += 1
+                        #grass_counter += 1
+                    elif x == 'fire':
+                        counter_dictionary['fire energy'] += 1
+                        #fire_counter += 1
+                    elif x == 'electric':
+                        counter_dictionary['electric energy'] += 1
+                        #electric_counter += 1
+                    elif x == 'fighting':
+                        counter_dictionary['fighting energy'] += 1
+                        #fighting_counter += 1
+                    elif x == 'dark':
+                        counter_dictionary['dark energy'] += 1
+                        #dark_counter += 1
+                    elif x == 'fairy':
+                        counter_dictionary['fairy energy'] += 1
+                        #fairy_counter += 1
+                    elif x == 'steel':
+                        counter_dictionary['steel energy'] += 1
+                        #steel_counter += 1
+                    elif x == 'dragon':
+                        counter_dictionary['dragon energy'] += 1
+                        #dragon_counter += 1
+                    elif x == 'psychic':
+                        counter_dictionary['psychic energy'] += 1
+                        #psychic_counter += 1
+                    elif x == 'normal':
+                        counter_dictionary['normal energy'] += 1
+                        #normal_counter += 1
+
+                for key, value in counter_dictionary.items():
+                    if value > 0:
+                        print(f"\nYou have {value} {key} cards in your hand")
+                
+
+                chosen_energy = str(input("\nPlease enter the type of energy you would like to attach: ")).lower()
+                chosen_energy = stringValidation(chosen_energy, playable_energies)
+                your_hand = attachChosenEnergy(chosen_energy, your_hand)
+
+                print(f"\nYou successfully attached a {chosen_energy} energy to {active_pokemon.get('name').title()}!")
 
             else:
                 print("bench")
