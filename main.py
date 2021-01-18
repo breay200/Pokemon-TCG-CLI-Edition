@@ -37,7 +37,8 @@ def clientSocket(username, server_info):
                 data_header = client_socket.recv(HEADER_LENGTH)
                 data_length = int(data_header.decode('utf-8').strip())
                 data = client_socket.recv(data_length).decode('utf-8')
-                print(data)
+                if data:
+                    break
 
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
@@ -108,6 +109,7 @@ def clientSocket(username, server_info):
         #THE ACTUAL GAMEPLAY OCCURS IN THIS WHILE LOOP
         global prize_deck
         global your_hand
+        global deck_in_use
         
         your_choice = rockPaperScissors()
         encodeAndSend(your_choice)
@@ -116,9 +118,10 @@ def clientSocket(username, server_info):
         answer = compareRockPaperScissors(your_choice, their_choice)
 
         print(answer)
-
-        prize_deck = removePrizeCardFromDeck(5, fire_deck)
-        your_hand = drawCard(7, fire_deck)
+        #change fire_deck to your_deck
+        random.shuffle(deck_in_use)
+        prize_deck = removePrizeCardFromDeck(5, deck_in_use)
+        your_hand = drawCard(7, deck_in_use)
         playPokemon()
         addEnergy()
         break
@@ -281,7 +284,7 @@ def deleteAFile(file):
 #VIEW DECK OPTION 
 def manageGameOptions():
     def inputDecision():
-        decision = str(input("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: ")).lower()
+        decision = str(input("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save progress to your user account,  'l' to load your deck from a file, 'd' to delete a save file, 'r' to return to the main menu: ")).lower()
         while decision not in ('a', 'v', 's', 'l', 'r', 'd'):
             decision = validInput(decision)
         return decision.lower()
@@ -290,7 +293,7 @@ def manageGameOptions():
     def validInput(decision):
         decision = str(input("\nPlease enter a valid input (enter 'h' for help): ")).lower()
         if decision == "h":
-            print("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save your deck to file, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
+            print("\nEnter 'a' to add cards to the database, 'v' to view your deck, 's' to save progress to your user account, 'l' to load your deck from a file, 'd' to delete a save file, or 'r' to return to the main menu: ")
         return decision.lower()
 
 
@@ -309,8 +312,7 @@ def manageGameOptions():
                 printDecks(files)
         
         filename = path + "/" + selection
-        deck_in_use = loadFromDict(filename)
-
+        deck_in_use = loadFromTxt(filename)
         return
 
 
@@ -341,6 +343,13 @@ def manageGameOptions():
 
     def listFiles(path):
         return os.listdir(path)
+
+    #BROKEN GETS KEY ERROR 0
+    def viewDeckInUse():
+        print(f"\nThere are {len(deck_in_use)} cards in your deck")
+        for x in deck_in_use:
+            print(f"\n{card_database[x].get('card_type')}")
+        return
     
 
     print("\n------- GAME OPTIONS MENU -------")
@@ -352,17 +361,17 @@ def manageGameOptions():
             no_cards_adding = int(input("How many cards would you like to add to the Pokemon database? "))
             addToDatabase(no_cards_adding)
         elif decision == 'v':
-            pass
+            viewDeckInUse()
         elif decision == 's':
             #today = date.today()
             #dateStr = today.strftime("%d-%m-%Y")
             #filename = str(username + "-"  + dateStr + ".json")
-            #print(filename)
-            #dictToFile(cards, filename)
-            pass
+            path = "save_files/users"
+            text = "Finished updating user profile!"
+            filename = username
+            dictToFile(user_account_dictionary, path, filename, text)
         elif decision == 'l':
             loadADeck()
-            print(deck_in_use)
         elif decision == 'd':
             deleteADeck()
         
@@ -576,6 +585,7 @@ def playPokemon():
                 return no_basic_pokemon
 
     global your_hand
+    global deck_in_use
     playable_pokemon = []
     no_basic_pokemon = int(0) 
     chosen_bench = ""
@@ -592,7 +602,7 @@ def playPokemon():
             break
         else:
             print("\nAs there are no basic pokemon in your hand, we must reshuffle.")
-            your_hand = drawCard(7, fire_deck)
+            your_hand = drawCard(7, deck_in_use)
 
 
     print(f"There are {len(playable_pokemon)} playable basic pokemon: {playable_pokemon}")
@@ -804,7 +814,7 @@ def addEnergy():
 #VARIABLES START
 card_database = {}
 user_account_dictionary = {}
-deck_in_use = {}
+deck_in_use = []
 your_hand = []
 active_pokemon = {}
 benched_pokemon = {}
@@ -818,9 +828,12 @@ card_database = loadFromDict(path)
 #    print(card_database[key].get('name'))
 
 #corresponds with the no. of pokemon cards in the deck
+'''
 fire_deck = [0, 1, 1, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 16, 16, 17, 17, 17, 18, 18, 19]
+path = "save_files/decks/fire_deck.txt"
+txtToFile(path, fire_deck)
+'''
 
-random.shuffle(fire_deck)
 #pop(0) removes the first item from a list
 #x = fire_deck.pop(0)
 
