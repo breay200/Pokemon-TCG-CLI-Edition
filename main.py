@@ -52,6 +52,18 @@ def clientSocket(username, server_info):
         return data
 
 
+    def attack():
+        options = ['y', 'n']
+        decision = str(input(f"\nDo you want to attack the enemy's {opponents_active_pokemon.get('name')}? (enter 'y' or 'n') "))
+        decision = stringValidation(decision, options)
+
+        if decision == 'y':
+
+            pass
+        else:
+            print("\nYou chose not to attack this turn")
+            return
+
     #COMPARE ROCK PAPER SCISSOR RESULTS
     def compareRockPaperScissors(your_choice, their_choice):
         
@@ -82,15 +94,27 @@ def clientSocket(username, server_info):
         elif your_choice == 'scissors' and their_choice =='rock':
             print(f"\nrock beats scissors, {opponent_username} gets to choose.")
             answer = receiveData()
-            return answer
+            if answer == 'first':
+                my_answer = 'second'
+            else:
+                my_answer == 'first'
+            return my_answer
         elif your_choice == 'rock' and their_choice == 'paper':
             print(f"\npaper beats rock, {opponent_username} gets to choose.")
             answer = receiveData()
-            return answer
+            if answer == 'first':
+                my_answer = 'second'
+            else:
+                my_answer == 'first'
+            return my_answer
         elif your_choice == 'paper' and their_choice == 'scissors':
             print(f"\nscissors beats paper, {opponent_username} gets to choose")
             answer = receiveData()
-            return answer
+            if answer == 'first':
+                my_answer = 'second'
+            else:
+                my_answer == 'first'
+            return my_answer
 
 
     HEADER_LENGTH = 10
@@ -113,8 +137,18 @@ def clientSocket(username, server_info):
         global prize_deck
         global your_hand
         global deck_in_use
+        global active_pokemon
+        global benched_pokemon
+        global opponents_active_pokemon
+        global opponents_benched_pokemon
+
+        your_hand = []
+        active_pokemon = {}
+        benched_pokemon = {}
+        opponents_active_pokemon = {}
+        opponents_benched_pokemon = {}
         
-        print(f"\nWaiting 5 seconds for the opponent to join the server... {time.sleep(5)}")
+        print(f"\nWaiting 3 seconds for the opponent to join the server... {time.sleep(3)}")
         encodeAndSend(username)
         opponent_username = receiveData()
         print(f"{opponent_username} has connected")
@@ -130,18 +164,76 @@ def clientSocket(username, server_info):
         your_hand = drawCard(7, deck_in_use)
 
         if answer == 'first':
+            #START YOUR TURN
+            your_hand = drawCard(1, deck_in_use)
             playPokemon()
             addEnergy()
+            #SEND DATA TO OTHER USER
             encodeAndSend(active_pokemon)
             encodeAndSend(benched_pokemon)
         elif answer == 'second':
+            #RECEIVE DATA FROM OTHER USER
             opponents_active_pokemon = receiveData()
             opponents_benched_pokemon = receiveData()
-            print(opponents_active_pokemon)
-            print(opponents_benched_pokemon)
+            #START YOUR TURN
+            your_hand = drawCard(1, deck_in_use)
+            playPokemon()
+            addEnergy()
+            attack()
+            #SEND DATA TO OTHER USER
+            encodeAndSend(active_pokemon)
+            encodeAndSend(benched_pokemon)
+            encodeAndSend(opponents_active_pokemon)
+            encodeAndSend(opponents_benched_pokemon)
 
-        break
-    return
+        if answer == 'first':
+            #RECEIVE DATA FROM OTHER USER
+            opponents_active_pokemon = receiveData()
+            opponents_benched_pokemon = receiveData()
+            active_pokemon = receiveData()
+            benched_pokemon = receiveData()
+        
+        while True:
+            if answer == 'first':
+                #START YOUR TURN
+                your_hand = drawCard(1, deck_in_use)
+                
+                if not active_pokemon:
+                    playPokemon()
+                
+                addEnergy()
+                attack()
+                #SEND DATA TO OTHER USER
+                encodeAndSend(active_pokemon)
+                encodeAndSend(benched_pokemon)
+                encodeAndSend(opponents_active_pokemon)
+                encodeAndSend(opponents_benched_pokemon)
+            elif answer == 'second':
+                #RECEIVE DATA FROM OTHER USER
+                opponents_active_pokemon = receiveData()
+                opponents_benched_pokemon = receiveData()
+                active_pokemon = receiveData()
+                benched_pokemon = receiveData()
+                #START YOUR TURN
+                your_hand = drawCard(1, deck_in_use)
+                if not active_pokemon:
+                    playPokemon()
+                addEnergy()
+                attack()
+                #SEND DATA TO OTHER USER
+                encodeAndSend(active_pokemon)
+                encodeAndSend(benched_pokemon)
+                encodeAndSend(opponents_active_pokemon)
+                encodeAndSend(opponents_benched_pokemon)
+            
+            if answer == 'first':
+                opponents_active_pokemon = receiveData()
+                opponents_benched_pokemon = receiveData()
+                active_pokemon = receiveData()
+                benched_pokemon = receiveData()
+
+        
+        
 
 
 #ADD CARDS TO DATABASE - DICTIONARY
@@ -504,7 +596,7 @@ def flipCoin():
         return decision
     else:
         print(f"\nYou chose {coin_toss} and it landed {random_coin_choice}...\nYour opponent gets to choose who goes first")
-        return ""    
+        return decision
 
 
 def createLocalUserAccount(user_save_path):
@@ -831,11 +923,6 @@ def addEnergy():
 card_database = {}
 user_account_dictionary = {}
 deck_in_use = []
-your_hand = []
-active_pokemon = {}
-benched_pokemon = {}
-opponents_active_pokemon = {}
-opponents_benched_pokemon = {}
 ##VARIABLES END
 
 #PROGRAM STARTS HERE
