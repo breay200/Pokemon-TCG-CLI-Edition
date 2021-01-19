@@ -30,7 +30,7 @@ def clientSocket(username, server_info):
 
     def pickleDumpAndSend(variable):
         variable = pickle.dumps(variable)
-        variable_header = f"{len(variable):<{HEADER_LENGTH}}"
+        variable_header = bytes(f'{len(variable):<{HEADER_LENGTH}}', "utf-8")
         client_socket.send(variable_header+variable)
         return
 
@@ -261,7 +261,7 @@ def clientSocket(username, server_info):
 
     while True:
         #THE ACTUAL GAMEPLAY OCCURS IN THIS WHILE LOOP
-        print(f"\nWaiting 3 seconds for the opponent to join the server... {time.sleep(3)}")
+        time.sleep(2)
         encodeAndSend(username)
         opponent_username = receiveData()
         print(f"{opponent_username} has connected")
