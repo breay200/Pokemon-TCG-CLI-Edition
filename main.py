@@ -708,6 +708,10 @@ def flipCoin():
         return decision
     else:
         print(f"\nYou chose {coin_toss} and it landed {random_coin_choice}...\nYour opponent gets to choose who goes first")
+        if coin_toss == 'first' and random_coin_choice == 'second':
+            decision = 'second'
+        else:
+            decision = 'first'
         return decision
 
 
