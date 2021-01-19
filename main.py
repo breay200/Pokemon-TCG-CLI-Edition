@@ -53,70 +53,103 @@ def clientSocket(username, server_info):
 
 
     def attack():
+        def decideMove():
+            no_moves = active_pokemon.get('no_moves')
+            options = ['retreat', 'end turn']
+
+            for x in range(no_moves):
+                print(f"\nEnter {active_pokemon.get(f'ability_{x}_name')} if you choose this ability: ")
+                options.append(active_pokemon.get(f'ability_{x}_name'))
+
+            print(f"\nEnter 'retreat' if you want to retreat the active pokemon: ")
+            print(f"\nEnter 'end turn' if you cannot attack and want to end your turn: ")
+            decision = str(input(f"\nPlease choose one the following options ({options})"))
+            decision = stringValidation(decision, options)
+            options.clear()
+            return decision
+        
+        def attackEnemy(decision):
+            no_moves = active_pokemon.get('no_moves')
+            for x in range(no_moves):
+                if decision == active_pokemon.get(f'ability_{x}_name'):
+                    opponent_health = int(opponents_active_pokemon.get('health'))
+                    opponents_active_pokemon['health'] = opponent_health - int(active_pokemon.get(f'ability_{x}_damage'))
+                    print(f"\nYou attacked {opponents_active_pokemon.get('name').title()} for {active_pokemon.get(f'ability_{x}_damage')} damage...")
+                    
+                    if opponents_active_pokemon.get('health') > 0:
+                        print(f"\nNow {opponents_active_pokemon.get('name').title()} has only {opponents_active_pokemon.get('health')}HP!")
+                    else:
+                        print(f"\nWOW... {active_pokemon.get('name').title()} knocked out {opponents_active_pokemon.get('name').title()}!")
+                        print(f"\nYou get to draw a prize card!")
+                        your_hand = takePrizeCard(your_hand)
+            return active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand
+
+        global active_pokemon
+        global benched_pokemon
+        global opponents_active_pokemon
+        global opponents_benched_pokemon
+        global your_hand
+        global prize_deck
+
         options = ['y', 'n']
         decision = str(input(f"\nDo you want to attack the enemy's {opponents_active_pokemon.get('name')}? (enter 'y' or 'n') "))
         decision = stringValidation(decision, options)
 
         if decision == 'y':
+            
             viewActivePokemon()
-            no_moves = int(active_pokemon.get('no_moves'))
+            while True:
+                decision = decideMove()
+                no_moves = active_pokemon.get('no_moves')
 
-            def getDecisionAndNoMoves():
-                options = ['retreat', 'end turn']
+                for x in range(no_moves):
+                    if decision == active_pokemon.get(f'ability_{x}_name'):
+                        if int(active_pokemon.get('no_attached_energy')) >= int(active_pokemon.get(f'ability_{x}_no_energy')):
+                            active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand = attackEnemy(decision)
+                            return active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand
+                        elif int(active_pokemon.get('no_attached_energy')) < int(active_pokemon.get(f'ability_{x}_no_energy')):
+                            print("\nYou don't have enough energy cards for this attack")
+                            decision = decideMove()
+            
+                if decision == 'retreat':
+                    if active_pokemon.get('retreat_cost').lower() == 'none' or active_pokemon.get('retreat_cost').lower() == 0:
+                        playable_pokemon = []
+                        print("\nSelect one of the following pokemon to make the new active pokemon: ")
+                        
+                        for key in benched_pokemon:
+                            print(f"\n{key}) {benched_pokemon.get('name').title()}")
+                            playable_pokemon.append(benched_pokemon[key].get('name'))
+                        
+                        decision = str(input(f"\nEnter the name of the currently benched pokemon that you want to make the active ({playable_pokemon}): "))
+                        decision = stringValidation(decision, playable_pokemon)
 
-                for x in no_moves:
-                    print(f"\nEnter {active_pokemon.get(f'ability_{x}_name')} if you choose this ability: ")
-                    options.append(active_pokemon.get(f'ability_{x}_name'))
+                        x = len(benched_pokemon) + 1
+                        benched_pokemon[x] = active_pokemon
+                        active_pokemon = {}
 
-                print(f"\nEnter 'retreat' if you want to retreat the active pokemon: ")
-                print(f"\nEnter 'end turn' if you cannot attack and want to end your turn: ")
-                decision = str(input(f"\nPlease choose on the following options ({options})"))
-                decision = stringValidation(decision, options)
-                options.clear()
-                return decision
+                        for x in benched_pokemon:
+                            x = str(x)
+                            if decision == benched_pokemon[x].get('name'):
+                                for key, value in benched_pokemon[x]:
+                                    active_pokemon[key] = value
+                                del benched_pokemon[key]
+                                break
+                        
+                        print(f"\n{active_pokemon.get('name').title()} is now the active pokemon")
+                        print(f"\n{decision.title()} has been returned to the bench")
+                        decision = decideMove()
 
-            if int(active_pokemon.get('no_attached_energy')) == int(active_pokemon.get(f'ability_{}_no_energy')):
-                print("You have enough energy cards")
-            elif int(active_pokemon.get('no_attached_energy')) < int(active_pokemon.get(f'ability_{}_no_energy')):
-                print("You don't have enough energy cards for this attack")
-                decision = getDecisionAndNoMoves()
-            elif decision == 'retreat':
-                if active_pokemon.get('retreat_cost').lower() == 'none' or active_pokemon.get('retreat_cost').lower() == 0:
-                    playable_pokemon = []
-                    print("\nSelect one of the following pokemon to make the new active pokemon: ")
-                    
-                    for key in benched_pokemon:
-                        print(f"\n{key}) {benched_pokemon.get('name').title()}")
-                        playable_pokemon.append(benched_pokemon[key].get('name'))
-                    
-                    decision = str(input(f"\nEnter the name of the currently benched pokemon that you want to make the active ({playable_pokemon}): "))
-                    decision = stringValidation(decision, playable_pokemon)
+                    elif active_pokemon.get('no_attached_energy') < active_pokemon.get('retreat_cost'):
+                        print(f"\nYou do not have enough energy cards to retreat {active_pokemon.get('name').title()} ")
+                        decision = decideMove()
 
-                    x = len(benched_pokemon) + 1
-
-                    benched_pokemon[x] = active_pokemon
-
-                    active_pokemon = {}
-
-                    for x in benched_pokemon:
-                        x = str(x)
-                        if decision == benched_pokemon[x].get('name'):
-                            for key, value in benched_pokemon[x]:
-                                active_pokemon[key] = value
-                            del benched_pokemon[key]
-                            break
-                    
-                    print(f"\n{active_pokemon.get('name').title()} is now the active pokemon")
-                    print(f"\n{decision.title()} has been returned to the bench")
-
-
-                    
-
-
-
+                    elif decision == 'end turn':
+                        print("\nEnding your turn...")
+                        return active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand
+        
         else:
             print("\nYou chose not to attack this turn")
-            return
+            return active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand
 
     #COMPARE ROCK PAPER SCISSOR RESULTS
     def compareRockPaperScissors(your_choice, their_choice):
@@ -194,6 +227,7 @@ def clientSocket(username, server_info):
         global benched_pokemon
         global opponents_active_pokemon
         global opponents_benched_pokemon
+        global user_account_dictionary
 
         your_hand = []
         active_pokemon = {}
@@ -232,12 +266,13 @@ def clientSocket(username, server_info):
             your_hand = drawCard(1, deck_in_use)
             playPokemon()
             addEnergy()
-            attack()
+            active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand = attack()
             #SEND DATA TO OTHER USER
             encodeAndSend(active_pokemon)
             encodeAndSend(benched_pokemon)
             encodeAndSend(opponents_active_pokemon)
             encodeAndSend(opponents_benched_pokemon)
+            encodeAndSend(len(prize_deck))
 
         if answer == 'first':
             #RECEIVE DATA FROM OTHER USER
@@ -245,6 +280,7 @@ def clientSocket(username, server_info):
             opponents_benched_pokemon = receiveData()
             active_pokemon = receiveData()
             benched_pokemon = receiveData()
+            opponents_no_prize_cards = receiveData()
         
         while True:
             if answer == 'first':
@@ -255,18 +291,28 @@ def clientSocket(username, server_info):
                     playPokemon()
                 
                 addEnergy()
-                attack()
+                active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand = attack()
                 #SEND DATA TO OTHER USER
                 encodeAndSend(active_pokemon)
                 encodeAndSend(benched_pokemon)
                 encodeAndSend(opponents_active_pokemon)
                 encodeAndSend(opponents_benched_pokemon)
+                encodeAndSend(len(prize_deck))
+                if len(prize_deck) < 1:
+                    print("\nYOU WIN! CONGRATULATIONS")
+                    user_account_dictionary['no_wins'] += 1
+                    return
             elif answer == 'second':
                 #RECEIVE DATA FROM OTHER USER
                 opponents_active_pokemon = receiveData()
                 opponents_benched_pokemon = receiveData()
                 active_pokemon = receiveData()
                 benched_pokemon = receiveData()
+                opponents_no_prize_cards = receiveData()
+                if opponents_no_prize_cards < 1:
+                    print("\nYOU LOST... MAYBE NEXT TIME")
+                    user_account_dictionary['no_losses'] -= 1
+                    return
                 #START YOUR TURN
                 your_hand = drawCard(1, deck_in_use)
                 if not active_pokemon:
@@ -278,12 +324,25 @@ def clientSocket(username, server_info):
                 encodeAndSend(benched_pokemon)
                 encodeAndSend(opponents_active_pokemon)
                 encodeAndSend(opponents_benched_pokemon)
+                encodeAndSend(len(prize_deck))
+                if len(prize_deck) < 1:
+                    print("\nYOU WIN! CONGRATULATIONS!")
+                    user_account_dictionary['no_wins'] += 1
+                    return
             
             if answer == 'first':
                 opponents_active_pokemon = receiveData()
                 opponents_benched_pokemon = receiveData()
                 active_pokemon = receiveData()
                 benched_pokemon = receiveData()
+                opponents_no_prize_cards = receiveData()
+                if opponents_no_prize_cards < 1:
+                    print("\nYOU LOST... MAYBE NEXT TIME")
+                    user_account_dictionary['no_losses'] -= 1
+                    return
+        
+        client_socket.close()
+
 
         
         
@@ -701,6 +760,13 @@ def removePrizeCardFromDeck(no_prize_cards, deck_in_use):
         x = deck_in_use.pop(0)
         prizeCards.append(x)
     return prizeCards
+
+def takePrizeCard(your_hand):
+    global prize_deck
+    x = prize_deck.pop()
+    your_hand.append(x)
+    print(f"\nAdded 1 prize card to your hand, you now have {len(your_hand)} cards ")
+    return your_hand
 
 
 #THIS IS EXACTLY THE SAME CODE LOL
