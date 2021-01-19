@@ -229,22 +229,22 @@ def clientSocket(username, server_info):
                 my_answer == 'first'
             return my_answer
 
-        global prize_deck
-        global your_hand
-        global deck_in_use
-        global active_pokemon
-        global benched_pokemon
-        global opponents_active_pokemon
-        global opponents_benched_pokemon
-        global user_account_dictionary
+    global prize_deck
+    global your_hand
+    global deck_in_use
+    global active_pokemon
+    global benched_pokemon
+    global opponents_active_pokemon
+    global opponents_benched_pokemon
+    global user_account_dictionary
 
-        your_hand = []
-        active_pokemon = {}
-        benched_pokemon = {}
-        opponents_active_pokemon = {}
-        opponents_benched_pokemon = {}
-
-    HEADER_LENGTH = 10
+    your_hand = []
+    active_pokemon = {}
+    benched_pokemon = {}
+    opponents_active_pokemon = {}
+    opponents_benched_pokemon = {}
+    global HEADER_LENGTH
+    HEADER_LENGTH = 1024
     #IP = "127.0.0.1"
     #PORT = 8080
     server_info = tuple(server_info)
