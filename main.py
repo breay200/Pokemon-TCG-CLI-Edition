@@ -229,6 +229,20 @@ def clientSocket(username, server_info):
                 my_answer == 'first'
             return my_answer
 
+        global prize_deck
+        global your_hand
+        global deck_in_use
+        global active_pokemon
+        global benched_pokemon
+        global opponents_active_pokemon
+        global opponents_benched_pokemon
+        global user_account_dictionary
+
+        your_hand = []
+        active_pokemon = {}
+        benched_pokemon = {}
+        opponents_active_pokemon = {}
+        opponents_benched_pokemon = {}
 
     HEADER_LENGTH = 10
     #IP = "127.0.0.1"
@@ -247,21 +261,6 @@ def clientSocket(username, server_info):
 
     while True:
         #THE ACTUAL GAMEPLAY OCCURS IN THIS WHILE LOOP
-        global prize_deck
-        global your_hand
-        global deck_in_use
-        global active_pokemon
-        global benched_pokemon
-        global opponents_active_pokemon
-        global opponents_benched_pokemon
-        global user_account_dictionary
-
-        your_hand = []
-        active_pokemon = {}
-        benched_pokemon = {}
-        opponents_active_pokemon = {}
-        opponents_benched_pokemon = {}
-        
         print(f"\nWaiting 3 seconds for the opponent to join the server... {time.sleep(3)}")
         encodeAndSend(username)
         opponent_username = receiveData()
