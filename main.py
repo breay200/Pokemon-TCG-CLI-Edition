@@ -58,15 +58,68 @@ def clientSocket(username, server_info):
         decision = stringValidation(decision, options)
 
         if decision == 'y':
+            viewActivePokemon()
+            no_moves = int(active_pokemon.get('no_moves'))
 
-            pass
+            def getDecisionAndNoMoves():
+                options = ['retreat', 'end turn']
+
+                for x in no_moves:
+                    print(f"\nEnter {active_pokemon.get(f'ability_{x}_name')} if you choose this ability: ")
+                    options.append(active_pokemon.get(f'ability_{x}_name'))
+
+                print(f"\nEnter 'retreat' if you want to retreat the active pokemon: ")
+                print(f"\nEnter 'end turn' if you cannot attack and want to end your turn: ")
+                decision = str(input(f"\nPlease choose on the following options ({options})"))
+                decision = stringValidation(decision, options)
+                options.clear()
+                return decision
+
+            if int(active_pokemon.get('no_attached_energy')) == int(active_pokemon.get(f'ability_{}_no_energy')):
+                print("You have enough energy cards")
+            elif int(active_pokemon.get('no_attached_energy')) < int(active_pokemon.get(f'ability_{}_no_energy')):
+                print("You don't have enough energy cards for this attack")
+                decision = getDecisionAndNoMoves()
+            elif decision == 'retreat':
+                if active_pokemon.get('retreat_cost').lower() == 'none' or active_pokemon.get('retreat_cost').lower() == 0:
+                    playable_pokemon = []
+                    print("\nSelect one of the following pokemon to make the new active pokemon: ")
+                    
+                    for key in benched_pokemon:
+                        print(f"\n{key}) {benched_pokemon.get('name').title()}")
+                        playable_pokemon.append(benched_pokemon[key].get('name'))
+                    
+                    decision = str(input(f"\nEnter the name of the currently benched pokemon that you want to make the active ({playable_pokemon}): "))
+                    decision = stringValidation(decision, playable_pokemon)
+
+                    x = len(benched_pokemon) + 1
+
+                    benched_pokemon[x] = active_pokemon
+
+                    active_pokemon = {}
+
+                    for x in benched_pokemon:
+                        x = str(x)
+                        if decision == benched_pokemon[x].get('name'):
+                            for key, value in benched_pokemon[x]:
+                                active_pokemon[key] = value
+                            del benched_pokemon[key]
+                            break
+                    
+                    print(f"\n{active_pokemon.get('name').title()} is now the active pokemon")
+                    print(f"\n{decision.title()} has been returned to the bench")
+
+
+                    
+
+
+
         else:
             print("\nYou chose not to attack this turn")
             return
 
     #COMPARE ROCK PAPER SCISSOR RESULTS
     def compareRockPaperScissors(your_choice, their_choice):
-        
         while your_choice == their_choice:
             print("\nyou and the opponent both chose the same, try again: ")
             your_choice = rockPaperScissors()
