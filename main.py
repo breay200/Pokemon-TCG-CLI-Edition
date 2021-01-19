@@ -30,7 +30,7 @@ def clientSocket(username, server_info):
 
     def pickleDumpAndSend(variable):
         variable = pickle.dumps(variable)
-        variable_header = f"{len(variable):<{HEADER_LENGTH}}".encode('utf-8')
+        variable_header = f"{len(variable):<{HEADER_LENGTH}}"
         client_socket.send(variable_header+variable)
         return
 
@@ -62,7 +62,8 @@ def clientSocket(username, server_info):
                 #time.sleep(3)
                 data_header = client_socket.recv(HEADER_LENGTH)
                 data_length = int(data_header.decode('utf-8').strip())
-                data = pickle.loads(client_socket.recv(data_length))
+                data = client_socket.recv(data_length)
+                data = pickle.loads(data)
                 if data:
                     break
 
