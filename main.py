@@ -39,7 +39,7 @@ def clientSocket(username, server_info):
             while True:
                 #time.sleep(3)
                 data_header = client_socket.recv(HEADER_LENGTH)
-                data_length = int(data_header.decode('utf-8').strip())
+                data_length = int(float(data_header.decode('utf-8').strip()))
                 data = client_socket.recv(data_length).decode('utf-8')
                 if data:
                     break
@@ -61,7 +61,7 @@ def clientSocket(username, server_info):
             while True:
                 #time.sleep(3)
                 data_header = client_socket.recv(HEADER_LENGTH)
-                data_length = int(data_header.decode('utf-8').strip())
+                data_length = int(float(data_header.decode('utf-8').strip()))
                 data = client_socket.recv(data_length)
                 data = pickle.loads(data)
                 if data:
@@ -306,7 +306,7 @@ def clientSocket(username, server_info):
             opponents_active_pokemon = receivePickleData()
             opponents_benched_pokemon = receivePickleData()
             active_pokemon = receivePickleData()
-            benched_pokemon = recereceivePickleDataiveData()
+            benched_pokemon = receivePickleData()
             opponents_no_prize_cards = receivePickleData()
         
         while True:
