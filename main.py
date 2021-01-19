@@ -28,8 +28,12 @@ def clientSocket(username, server_info):
         client_socket.send(variable_header+variable)
         return
 
+    def pickleDumpAndSend(variable):
+        variable = pickle.dumps(variable)
+        variable_header = f"{len(variable):<{HEADER_LENGTH}}".encode('utf-8')
+        client_socket.send(variable_header+variable)
+        return
 
-    #RECEIVE DATA FROM SERVER
     def receiveData():
         try:
             while True:
@@ -37,6 +41,28 @@ def clientSocket(username, server_info):
                 data_header = client_socket.recv(HEADER_LENGTH)
                 data_length = int(data_header.decode('utf-8').strip())
                 data = client_socket.recv(data_length).decode('utf-8')
+                if data:
+                    break
+
+        except IOError as e:
+            if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                print('Reading error', str(e))
+                sys.exit()
+        
+        except Exception as e:
+            print('General error',str(e))
+            sys.exit()
+        
+        return data
+
+    #RECEIVE DATA FROM SERVER
+    def receivePickleData():
+        try:
+            while True:
+                #time.sleep(3)
+                data_header = client_socket.recv(HEADER_LENGTH)
+                data_length = int(data_header.decode('utf-8').strip())
+                data = pickle.loads(client_socket.recv(data_length))
                 if data:
                     break
 
@@ -256,31 +282,31 @@ def clientSocket(username, server_info):
             playPokemon()
             addEnergy()
             #SEND DATA TO OTHER USER
-            encodeAndSend(active_pokemon)
-            encodeAndSend(benched_pokemon)
+            pickleDumpAndSend(active_pokemon)
+            pickleDumpAndSend(benched_pokemon)
         elif answer == 'second':
             #RECEIVE DATA FROM OTHER USER
-            opponents_active_pokemon = receiveData()
-            opponents_benched_pokemon = receiveData()
+            opponents_active_pokemon = receivePickleData()
+            opponents_benched_pokemon = receivePickleData()
             #START YOUR TURN
             your_hand = drawCard(1, deck_in_use)
             playPokemon()
             addEnergy()
             active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand = attack()
             #SEND DATA TO OTHER USER
-            encodeAndSend(active_pokemon)
-            encodeAndSend(benched_pokemon)
-            encodeAndSend(opponents_active_pokemon)
-            encodeAndSend(opponents_benched_pokemon)
-            encodeAndSend(len(prize_deck))
+            pickleDumpAndSend(active_pokemon)
+            pickleDumpAndSend(benched_pokemon)
+            pickleDumpAndSend(opponents_active_pokemon)
+            pickleDumpAndSend(opponents_benched_pokemon)
+            pickleDumpAndSend(len(prize_deck))
 
         if answer == 'first':
             #RECEIVE DATA FROM OTHER USER
-            opponents_active_pokemon = receiveData()
-            opponents_benched_pokemon = receiveData()
-            active_pokemon = receiveData()
-            benched_pokemon = receiveData()
-            opponents_no_prize_cards = receiveData()
+            opponents_active_pokemon = receivePickleData()
+            opponents_benched_pokemon = receivePickleData()
+            active_pokemon = receivePickleData()
+            benched_pokemon = recereceivePickleDataiveData()
+            opponents_no_prize_cards = receivePickleData()
         
         while True:
             if answer == 'first':
@@ -293,22 +319,22 @@ def clientSocket(username, server_info):
                 addEnergy()
                 active_pokemon, benched_pokemon, opponents_active_pokemon, opponents_benched_pokemon, prize_deck, your_hand = attack()
                 #SEND DATA TO OTHER USER
-                encodeAndSend(active_pokemon)
-                encodeAndSend(benched_pokemon)
-                encodeAndSend(opponents_active_pokemon)
-                encodeAndSend(opponents_benched_pokemon)
-                encodeAndSend(len(prize_deck))
+                pickleDumpAndSend(active_pokemon)
+                pickleDumpAndSend(benched_pokemon)
+                pickleDumpAndSend(opponents_active_pokemon)
+                pickleDumpAndSend(opponents_benched_pokemon)
+                pickleDumpAndSend(len(prize_deck))
                 if len(prize_deck) < 1:
                     print("\nYOU WIN! CONGRATULATIONS")
                     user_account_dictionary['no_wins'] += 1
                     return
             elif answer == 'second':
                 #RECEIVE DATA FROM OTHER USER
-                opponents_active_pokemon = receiveData()
-                opponents_benched_pokemon = receiveData()
-                active_pokemon = receiveData()
-                benched_pokemon = receiveData()
-                opponents_no_prize_cards = receiveData()
+                opponents_active_pokemon = receivePickleData()
+                opponents_benched_pokemon = receivePickleData()
+                active_pokemon = receivePickleData()
+                benched_pokemon = receivePickleData()
+                opponents_no_prize_cards = receivePickleData()
                 if opponents_no_prize_cards < 1:
                     print("\nYOU LOST... MAYBE NEXT TIME")
                     user_account_dictionary['no_losses'] -= 1
@@ -320,22 +346,22 @@ def clientSocket(username, server_info):
                 addEnergy()
                 attack()
                 #SEND DATA TO OTHER USER
-                encodeAndSend(active_pokemon)
-                encodeAndSend(benched_pokemon)
-                encodeAndSend(opponents_active_pokemon)
-                encodeAndSend(opponents_benched_pokemon)
-                encodeAndSend(len(prize_deck))
+                pickleDumpAndSend(active_pokemon)
+                pickleDumpAndSend(benched_pokemon)
+                pickleDumpAndSend(opponents_active_pokemon)
+                pickleDumpAndSend(opponents_benched_pokemon)
+                pickleDumpAndSend(len(prize_deck))
                 if len(prize_deck) < 1:
                     print("\nYOU WIN! CONGRATULATIONS!")
                     user_account_dictionary['no_wins'] += 1
                     return
             
             if answer == 'first':
-                opponents_active_pokemon = receiveData()
-                opponents_benched_pokemon = receiveData()
-                active_pokemon = receiveData()
-                benched_pokemon = receiveData()
-                opponents_no_prize_cards = receiveData()
+                opponents_active_pokemon = receivePickleData()
+                opponents_benched_pokemon = receivePickleData()
+                active_pokemon = receivePickleData()
+                benched_pokemon = receivePickleData()
+                opponents_no_prize_cards = receivePickleData()
                 if opponents_no_prize_cards < 1:
                     print("\nYOU LOST... MAYBE NEXT TIME")
                     user_account_dictionary['no_losses'] -= 1
