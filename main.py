@@ -47,10 +47,12 @@ def clientSocket(username, server_info):
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
                 print('Reading error', str(e))
+                print("NORMAL REC")
                 sys.exit()
         
         except Exception as e:
             print('General error',str(e))
+            print("NORMAL REC")
             sys.exit()
         
         return data
@@ -70,10 +72,12 @@ def clientSocket(username, server_info):
         except IOError as e:
             if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
                 print('Reading error', str(e))
+                print("PICKLE")
                 sys.exit()
         
         except Exception as e:
             print('General error',str(e))
+            print("PICKLE")
             sys.exit()
         
         return data
@@ -189,19 +193,22 @@ def clientSocket(username, server_info):
         if your_choice == 'rock' and their_choice == 'scissors':
             print(f"\nrock beats scissors, {username} gets to choose.")
             answer = flipCoin()
-            time.sleep(3)
+            str(answer)
+            time.sleep(1)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'paper' and their_choice == 'rock':
             print(f"\npaper beats rock, {username} gets to choose.")
             answer = flipCoin()
-            time.sleep(3)
+            str(answer)
+            time.sleep(1)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'scissors' and their_choice == 'paper':
             print(f"\nscissors beats paper, {username} gets to choose.")
             answer = flipCoin()
-            time.sleep(3)
+            str(answer)
+            time.sleep(1)
             encodeAndSend(answer)
             return answer
         elif your_choice == 'scissors' and their_choice =='rock':
@@ -282,6 +289,7 @@ def clientSocket(username, server_info):
             playPokemon()
             addEnergy()
             #SEND DATA TO OTHER USER
+            time.sleep(3)
             pickleDumpAndSend(active_pokemon)
             pickleDumpAndSend(benched_pokemon)
         elif answer == 'second':
@@ -1095,6 +1103,8 @@ txtToFile(path, fire_deck)
 
 
 print("\nWelcome to Pokemon TCG Cli Edition!\n")
+
+#deck_in_use = "save_files/decks/fire.txt"
 
 username = str(input("Please enter your username: ")).lower()
 
